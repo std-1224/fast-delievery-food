@@ -1,0 +1,38 @@
+{% extends "oscar/checkout/checkout.html" %}
+{% load currency_filters %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Payment details" %} | {{ block.super }}
+{% endblock %}
+
+{% block checkout_nav %}
+    {% include 'oscar/checkout/nav.html' with step=3 %}
+{% endblock %}
+
+{% block checkout_title %}{% trans "Enter payment details" %}{% endblock %}
+
+{% block order_contents %}{% endblock %}
+{% block shipping_address %}{% endblock %}
+{% block shipping_method %}{% endblock %}
+{% block payment_method %}{% endblock %}
+
+{% block payment_details %}
+   
+
+<div>
+    {% block payment_details_content %}
+        {% if anon_checkout_allowed or request.user.is_authenticated %}
+            <div class="d-flex flex-column align-items-start my-4">
+                <div class="d-flex flex-column align-items-center">
+                    {% include "oscar/checkout/providers/stripe.html" with basket=basket order_total=order_total  %}
+                    <p class="my-1 m-0 font-weight-bold">OR</p>
+                    {% include "oscar/checkout/providers/paypal.html" %}
+                    <p class="my-1 m-0 font-weight-bold">OR</p>
+                    {% include "oscar/checkout/providers/cash.html"%}
+                </div>
+            </div>
+        {% endif %}
+        {% endblock payment_details_content %}    
+    </div>
+{% endblock payment_details %}

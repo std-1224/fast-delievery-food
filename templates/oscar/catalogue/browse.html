@@ -1,0 +1,323 @@
+{% extends "oscar/theme/justeat/partials/sidebar.html" %}
+
+{% load basket_tags %}
+{% load product_tags %}
+{% load system_tags %}
+{% load custom_category_tags %} {% category_tree as tree_categories %}
+{% load catalogue_tags %} {% get_product as get_filtered_products  %}
+{% load static %}
+
+{% get_system as s_config %}
+
+{% load i18n %}
+
+{% block title %}
+    {% if summary %}{{ summary }} |{% endif %} {{ block.super }}
+{% endblock %}
+
+{% block headertext %}{{ summary }}{% endblock %}
+
+
+{% block main %}
+<link
+  rel="stylesheet"
+  href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+/>
+<style>
+  .link-btn {
+    border: none;
+    display: flex;
+    flex-direction: row;
+    background: none;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    text-decoration: underline;
+    color: #242e30;
+  }
+
+  .bs-info {
+    padding-top: 57px !important;
+  }
+
+  .order-info {
+    position: sticky !important;
+    top: 20px;
+  }
+
+  .order-info {
+    padding: 25px;
+    /* border-radius: 12px;
+    border: 1px solid #efedea;
+    box-shadow: 0 4px 6px 0 rgba(27, 35, 36, 0.02),
+      0 2px 12px -2px rgba(27, 35, 36, 0.08), 0 3px 6px 0 rgba(27, 35, 36, 0.06); */
+    background: white;
+    position: relative;
+    height: fit-content;
+  }
+
+  .order-info h3 {
+    font-size: 1g5rem;
+  }
+
+  .bs-info .bs-logo-header {
+    border: 1px solid #dbd9d7;
+    border-radius: 12px;
+    width: 67px;
+    aspect-ratio: 1 / 1;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -150%);
+  }
+
+  .bs-info .business-header-cuisines {
+    margin: 0.5rem !important;
+  }
+
+  .bs-info:first-of-type {
+    text-align: center;
+  }
+
+  .bs-info .order-status-wrapper {
+    background-color: #f5f3f1;
+    display: block;
+    margin: 16px auto 0;
+    max-width: 360px;
+    padding: 16px;
+    border-radius: 12px;
+    min-height: 100px;
+  }
+
+  .bs-info .order-status-wrapper .order-status-row {
+    align-items: center;
+    border-bottom: 1px solid #efedea;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    min-height: 32px;
+    padding-bottom: 16px;
+  }
+
+  .business-review {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 0.75rem;
+  }
+
+  .business-review a {
+    font-size: 0.875rem;
+    color: black;
+    text-decoration: underline;
+    font-weight: 500;
+  }
+
+  .review-stars {
+    direction: rtl;
+    display: inline-block;
+  }
+
+  .review-stars input[type="radio"] {
+    display: none;
+  }
+
+  .review-stars label {
+    float: right;
+    cursor: pointer;
+    color: #ccc;
+    line-height: 24px;
+    margin: 0;
+  }
+
+  .review-stars label:before {
+    content: "\2605";
+    font-size: 24px;
+  }
+
+  .review-stars input[type="radio"]:checked ~ label {
+    color: #ff8000;
+  }
+
+  .basker-switcher {
+    background-color: #efedea;
+    border-radius: 50rem;
+    display: flex;
+    height: 50px;
+    justify-content: space-around;
+    margin: 8px 0 16px;
+    padding: 3px;
+  }
+
+  .delivery-option-label {
+    align-items: center;
+    border-radius: 50rem;
+    display: flex;
+    font-size: 14px;
+    justify-content: center;
+    line-height: 1.43;
+    transition-duration: 75ms;
+    transition-property: font-size, padding, width, background-color,
+      border-radius;
+    width: 50%;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+
+  .delivery-option-label.active {
+    background-color: #fff;
+    box-shadow: 0 4px 6px 0 rgba(27, 35, 36, 0.02),
+      0 2px 12px -2px rgba(27, 35, 36, 0.08), 0 3px 6px 0 rgba(27, 35, 36, 0.06);
+    font-weight: 700;
+    width: 60%;
+  }
+
+  .delivery-option-label .delivery-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .basket-switcher-eta-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-left: 2px;
+  }
+
+  .basket-switcher-eta {
+    font-size: 0.75rem;
+  }
+
+  
+    .product-item-list {
+        width: 100%;
+        display: flex;
+        background: none;
+        border: none;
+        color: #242e30;
+        font-size: 16px;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        padding: 16px;
+        text-align: left;
+        border: 1px solid #efedea;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .item-content {
+        overflow-wrap: anywhere;
+    }
+
+    .item-image-container {
+        flex-shrink: 0;
+        height: 100px;
+        margin-left: auto;
+        padding-left: 8px;
+    }
+
+    .item-image {
+        aspect-ratio: 4 / 3;
+        border: 1px solid #efedea;
+        border-radius: 8px;
+        box-sizing: content-box;
+        height: 99px;
+        width: 132px;
+        object-fit: cover;
+        padding: 0;
+    }
+</style>
+
+<section>
+    <div class="mt-2 mb-2">
+      <div style="display: inline-flex; align-items: baseline; gap: 4rem;">
+        <strong style="font-size: 2rem;">{{ s_config.business_name }}</strong>
+        <div style="font-weight: normal; font-size: 1.5em;">
+          {{ s_config.business_address }}
+        </div>
+      </div>
+    </div>
+
+    {% if category and category.get_children %}
+      <section>
+        <div class="row">
+          {% for sub in category.get_children %}
+          <div class="col-12">
+              <a href="{{ sub.get_absolute_url }}" class="text-decoration-none text-reset">
+                  <div class="product-item-list">
+                    <div class="item-content">
+                        <div class="card-body">
+                          <h3 class="font-weight-bold" style="font-size: 1.25rem;">{{ sub.name }}</h3>
+                          <p class="card-title mt-2"><p>{{ sub.description | truncatewords:20 }}</p></p>
+                          <p class="card-text font-weight-bold">{{ sub.price_range|default:"-" }}</p>
+                        </div>
+                    </div>
+                    <div class="item-image-container">
+                        {% if sub.image %}
+                            <img src="{{ sub.image.url }}" class="card-img-top img-thumbnail item-image" alt="Product Image">
+                        {% else %}
+                            <img src="{% static 'media/image_not_found.jpg' %}" class="card-img-top img-thumbnail item-image" alt="No image available">
+                        {% endif %}
+                    </div>
+                  </div>
+              </a>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% else %}
+      {%if not category and sub_categories %}
+          {% for sub_category in sub_categories %}
+            <div class="col-12 mb-4">
+                <a href="{{ sub_category.get_absolute_url }}" class="text-decoration-none text-reset">
+                    <div class="product-item-list">
+                      <div class="item-content">
+                          <h3 class="font-weight-bold" style="font-size: 1.25rem;">{{ sub_category.name }}</h3>
+                          <p class="card-title mt-2"><p>{{ sub_category.description | truncatewords:20 }}</p></p>
+                          <p class="card-text font-weight-bold">{{ sub_category.price_range|default:"-" }}</p>
+                      </div>
+                      <div class="item-image-container">
+                          {% if sub_category.image %}
+                              <img src="{{ sub_category.image.url }}" class="card-img-top img-thumbnail item-image" alt="Product Image">
+                          {% else %}
+                              <img src="{% static 'media/image_not_found.jpg' %}" class="card-img-top img-thumbnail item-image" alt="No image available">
+                          {% endif %}
+                      </div>
+                    </div>
+                </a>
+            </div>
+          {% endfor %}
+      {% endif %}
+      {% block get_filtered_products %}
+          {% if s_config.display_product %}
+              {% include "oscar/theme/justeat/partials/product_list.html" %}
+          {% else %}
+              {% if get_filtered_products %}
+                  <section>
+                      <div>
+                          <ol class="row list-unstyled ml-0 pl-0">
+                              {% for prod in get_filtered_products %}
+                                  <li class="col-sm-6 col-md-4 col-lg-3">{% render_product prod %}</li>
+                              {% endfor %}
+                          </ol>
+                          {% include "oscar/partials/pagination.html" %}
+                      </div>
+                  </section>
+              {% else %}
+                  <p class="nonefound">{% trans "No products found." %}</p>
+              {% endif %}
+          {% endif %}
+      {% endblock get_filtered_products %}
+    {% endif %}
+</section>
+{% endblock %} 
+
+{% block onbodyload %}
+    {{ block.super }}
+    oscar.search.init();
+{% endblock %}
+
+{% block extrascripts %}
+    {{ block.super }}
+{% endblock %}

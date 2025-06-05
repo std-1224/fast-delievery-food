@@ -1,0 +1,19 @@
+{% load currency_filters %}
+{% load i18n %}
+
+<style>
+    .cash-button {
+      display: block;
+      white-space: nowrap;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-weight: 500;
+      width: 250px;
+      min-height: 35px;
+      max-height: 55px;
+    }
+</style>
+<form action="{% url 'checkout:preview' %}" class="form-stacked" method="POST">
+  <input type="hidden" name="action" value="place_order">
+  <input type="hidden" name="payment_method" value="Cash">
+  <button type="submit" class="btn btn-primary cash-button">{% trans "Cash" %}</button>
+</form>

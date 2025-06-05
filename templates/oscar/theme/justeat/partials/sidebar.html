@@ -1,0 +1,257 @@
+{% extends "oscar/theme/justeat/layout.html" %} {% load static %}
+{% block extrahead %}
+<script>
+  const store = {
+    state: {
+      cart: [],
+      deliveryType: 'delivery',
+    },
+  };
+
+  const screenMixin = {
+    data() {
+      return {
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+      };
+    },
+    computed: {
+      isMobile() {
+        return this.windowWidth <= 768;
+      },
+      isTablet() {
+        return this.windowWidth > 768 && this.windowWidth <= 1024;
+      },
+      isDesktop() {
+        return this.windowWidth > 1024;
+      },
+    },
+    methods: {
+      handleResize() {
+        this.windowWidth = window.innerWidth;
+        this.windowHeight = window.innerHeight;
+      },
+    },
+    mounted() {
+      window.addEventListener('resize', this.handleResize);
+    },
+    beforeDestroy() {
+      window.removeEventListener('resize', this.handleResize);
+    },
+  }
+
+  const debounce = (func, wait = 2000, immediate) => {
+    let timeout;
+    return function () {
+      const context = this,
+        args = arguments;
+      const later = function () {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      const callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  };
+</script>
+<!-- UTILS -->
+{% include "oscar/theme/justeat/scripts/utils.html" %}
+{% endblock %} 
+
+{% block sidebar %}
+<section v-cloak id="your_order">
+  <div v-if="!isMobile" style="width: 334px; min-width: 334px;">
+    [[isMobile]] {% include "oscar/theme/justeat/partials/basket.html" %}
+  </div>
+  <div v-else>
+    <div
+      class="modal fade"
+      id="orderModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="productModalLabel"
+      aria-hidden="true"
+    >
+      <div
+        class="modal-dialog modal-dialog-scrollable modal-md-fullscreen"
+        role="document"
+      >
+        <div class="modal-content">
+          <div class="overflow-auto">
+            <header>
+              <button
+                  type="button"
+                  data-dismiss="modal"
+                  aria-label="Close"
+                  class="btn modal-header-btn"
+              >
+                  <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 14 14"
+                  >
+                      <path
+                          d="M10.8676 2.20496L7.0001 6.07248L3.13258 2.20496L2.20508 3.13246L6.0726 6.99998L2.20508 10.8675L3.13258 11.795L7.0001 7.92748L10.8676 11.795L11.7951 10.8675L7.92761 6.99998L11.7951 3.13246L10.8676 2.20496Z"
+                      ></path>
+                  </svg>
+              </button>
+            </header>
+            {% include "oscar/theme/justeat/partials/basket.html" %}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fixed-bottom p-3 bg-white" v-if="showCheckoutButton">
+      <div class="d-flex justify-content-center">
+        <button
+          class="go-to-checkout-btn"
+          data-toggle="modal"
+          data-target="#orderModal"
+        >
+          Basket
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %} 
+{% block extrascripts %} 
+  {{ block.super }}
+  <script>
+    const setHeight = () => {
+      document.querySelector("#your_order").style.maxHeight = `${window.innerHeight}px`;
+    };
+    window.addEventListener("load", setHeight);
+    window.addEventListener("resize", setHeight);
+
+    const order = new Vue({
+      delimiters: ["[[", "]]"],
+      el: "#your_order",
+      mixins: [screenMixin],
+      data: {
+        store: store,
+      },
+      computed: {
+        total: () => {
+          return store?.state.cart
+            .reduce((acc, item) => {
+              return acc + parseFloat(item.price_excl_tax);
+            }, 0)
+            .toFixed(2);
+        },
+        showCheckoutButton: () => {
+          return store.state.cart.length > 0;
+        },
+      },
+      methods: {
+        openProductModal(product) {
+          productList.selectProduct(product);
+        },
+        debounceUpdateItem: debounce(async function (item, quantityValue) {
+          const quantity = parseInt(quantityValue);
+
+          if (!quantity) {
+            await this.deleteBasketLine(item.url);
+          } else {
+            await this.updateBasketLine(item.url, { quantity });
+          }
+          await this.initialBasket();
+        }, 200),
+
+        getBasketLineOptions(item) {
+          const result = Object.values(item.options).reduce((acc, option) => {
+            const value = option.value;
+
+            if (Array.isArray(value)) {
+              return [...acc, ...value];
+            }
+
+            return [...acc, value];
+          }, []);
+
+          return result;
+        },
+
+        async removeItem(item) {
+          await this.deleteBasketLine(item.url);
+          await this.initialBasket();
+        },
+        async initialBasket() {
+          const response = await this.getBasket();
+          this.store.state.cart = this.mapBasketToCart(response.data);
+        },
+        // ==== API ACTIONS ====
+        // BASKET
+        async getBasket() {
+          const csrftoken = utils.getCsrfToken();
+          return await axios.get("/api/basket/", {
+            withCredentials: true,
+            headers: {
+              "X-CSRFToken": csrftoken,
+            },
+          });
+        },
+        async addBasketLine(data) {
+          const csrftoken = utils.getCsrfToken();
+          return await axios.post("/api/basket/add-product/", data, {
+            withCredentials: true,
+            headers: {
+              "X-CSRFToken": csrftoken,
+            },
+          });
+        },
+        async updateBasketLine(lineUrl, data) {
+          const csrftoken = utils.getCsrfToken();
+          return await axios.patch(utils.httpToHttps(lineUrl), data, {
+            withCredentials: true,
+            headers: {
+              "X-CSRFToken": csrftoken,
+            },
+          });
+        },
+        async deleteBasketLine(lineUrl) {
+          const csrftoken = utils.getCsrfToken();
+
+          return await axios.delete(utils.httpToHttps(lineUrl), {
+            withCredentials: true,
+            headers: {
+              "X-CSRFToken": csrftoken,
+            },
+          });
+        },
+
+        // PRODUCTS
+        async getProductDetail(productId) {
+          return await axios.get(`/api/products/${productId}/`);
+        },
+
+        mapBasketToCart(basket) {
+          const { lines } = basket;
+
+          return lines.map((line) => {
+            const { product, quantity, attributes } = line;
+            const options = attributes.reduce((acc, item) => {
+              return {
+                ...acc,
+                [item.option_id]: {
+                  option_id: item.option_id,
+                  value: item.value,
+                },
+              };
+            }, {});
+
+            return {
+              url: line.url,
+              price_excl_tax: line.price_excl_tax,
+              price_currency: line.price_currency,
+              product,
+              quantity,
+              options,
+            };
+          });
+        },
+      },
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% load static %}
+{% load i18n %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger py-2">
+  <div class="container-fluid">
+    <!-- Logo -->
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <img src="{{ s_config.logo }}" alt="Logo" class="bg_top_header-logo mr-2">
+    </a>
+
+    <!-- Toggle button for mobile -->
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarContent"
+      aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContent">
+      <!-- Search form -->
+      <form class="form-inline mx-auto my-2 my-lg-0 w-100 justify-content-center"
+            style="max-width: 700px;"
+            action="{{ request.path }}" method="get">
+        <div class="input-group w-100 px-2">
+          <input class="form-control bg-transparent text-white border-white"
+                type="search"
+                name="search"
+                placeholder="Search..."
+                aria-label="Search"
+                style="border-bottom: 2px solid #fff; border-radius: 0;"
+                value="{{ request.GET.search|default_if_none:'' }}">
+          <div class="input-group-append">
+            <button class="btn text-white" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Right menu -->
+      <ul class="navbar-nav ml-auto d-flex align-items-center">
+        <li class="nav-item d-flex align-items-center text-white mr-3">
+          <i class="far fa-clock mr-1"></i> Open
+        </li>
+        <li class="nav-item position-relative mr-3">
+          <a class="nav-link text-white position-relative" href="{% url 'basket:summary' %}">
+            <i class="fas fa-shopping-cart fa-lg"></i>
+            {% if basket.num_items > 0 %}
+            <span class="badge badge-pill bg-warning text-dark position-absolute" style="top: -8px; right: -10px;">
+              {{ basket.num_items }}
+            </span>
+            {% endif %}
+          </a>
+        </li>
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'customer:profile-view' %}">
+            <i class="fas fa-user-circle mr-1"></i>{{ user.get_full_name|default:request.user.email }}
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'customer:logout' %}">
+            <i class="fas fa-sign-out-alt mr-1"></i>{% trans 'Logout' %}
+          </a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'customer:login' %}">
+            <i class="fas fa-sign-in-alt mr-1"></i>Sign In
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="{% url 'customer:register' %}">
+            <i class="fas fa-user-plus mr-1"></i>Sign Up
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

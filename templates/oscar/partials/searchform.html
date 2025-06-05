@@ -1,0 +1,30 @@
+
+<!-- Link Bootstrap JS and Popper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<style>
+  .custom-search-input:focus {
+    border-color: #ced4da;
+    box-shadow: none;
+  }
+  .border-input{
+    border-radius: 20px 0 0 20px
+  }
+  .border-button{
+    border-radius: 0 20px 20px 0
+  }
+
+</style>
+
+
+{% load catalogue_tags %}
+<div style="padding: 5px;">
+  <form class="form-inline" method="get">
+    <div class="input-group search-input-container">
+      <input name="search" style="width:400px" type="text" class="form-control custom-search-input border-input" placeholder="Enter your search key ...">
+      <div class="input-group-append">
+        <button class="btn btn-primary border-button" type="submit"><i class="fa fa-search"></i></button>
+      </div>
+    </div>
+  </form>
+</div>

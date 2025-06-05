@@ -1,0 +1,36 @@
+{% load currency_filters %}
+<style>
+    .stripe-button-el {
+        display: none !important;
+    }
+
+    .stripe-pay {
+        background: #635bff;
+        display: inline-block;
+        height: 35px;
+        text-decoration: none;
+        width: 250px;
+        border-radius: 4px;
+        user-select: none;
+        font-family: sohne-var, "Helvetica Neue", Arial, sans-serif;
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 14px;
+    }
+
+    .stripe-pay:hover {
+        background: #7a73ff;
+    }
+</style>
+
+<form action="{% url 'checkout:preview' %}" class="form-stacked" method="POST">
+    <link rel="stylesheet" href="https://checkout.stripe.com/v3/checkout/button.css"></link>
+    <script src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+            data-key="{{ stripe_publish_key }}" data-amount="{{ order_total_incl_tax_cents }}"
+            data-name="{{ shop_name }}"
+            data-description="{{ basket.num_items }} items ({{ order_total.incl_tax|currency }})">
+    </script>
+    <input type="hidden" name="action" value="place_order">
+    <input type="hidden" name="payment_method" value="Card">
+    <button type="submit" class="stripe-pay btn btn-primary">Pay with Debit / Credit Card</button>
+</form>

@@ -1,0 +1,115 @@
+<div class="content-wrapper bg-white">
+  <div class="sidebar-title d-flex justify-content-center px-3 pt-4">
+    <h3 class="font-weight-bold text-center h4">Basket</h3>
+  </div>
+
+  
+  <!-- Delivery/Collection Toggle -->
+  <div class="d-flex justify-content-center my-3">
+    <div class="btn-group bg-light p-1 rounded-pill shadow-sm" style="min-width: 320px;">
+      <button
+        type="button"
+        class="btn rounded-pill d-flex flex-column align-items-center"
+        :class="store.state.deliveryType === 'delivery' ? 'btn-light border border-primary font-weight-bold' : 'btn-light text-muted'"
+        @click="store.state.deliveryType = 'delivery'"
+        style="min-width: 150px;"
+      >
+        <span>
+          <i class="fas fa-biking"></i>
+          Delivery
+        </span>
+        <small class="font-weight-normal" style="font-size: 0.9em;">15-30 min</small>
+      </button>
+      <button
+        type="button"
+        class="btn rounded-pill d-flex flex-column align-items-center"
+        :class="store.state.deliveryType === 'collection' ? 'btn-light border border-warning font-weight-bold text-warning' : 'btn-light text-muted'"
+        @click="store.state.deliveryType = 'collection'"
+        style="min-width: 150px;"
+      >
+        <span>
+          <i class="fas fa-box-open"></i>
+          Collection
+        </span>
+        <small class="font-weight-normal" style="font-size: 0.9em;">15 min</small>
+      </button>
+    </div>
+  </div>
+
+  <div v-if="store?.state.cart.length" class="cart pt-4 px-4 pb-2">
+    <div class="cart-list">
+      <div
+        class="mb-4 cart-expanded-list-item"
+        v-if="store.state.cart"
+        v-for="(item, idx) in store.state.cart"
+        :key="item.id"
+      >
+        <div class="pl-4 h6 position-relative">
+          <div
+            class="position-absolute font-weight-bold"
+            style="top: 0; left: 0"
+          >
+            [[item.quantity]]
+          </div>
+
+          <div class="d-flex justify-content-start align-items-start">
+            <span class="cart-item-title text-left"
+              ><strong>[[ item.product.title ]]</strong></span
+            >
+            <span class="ml-auto text-right">
+              {{s_config.currency}}[[ item.price_excl_tax ?? 0 ]]
+            </span>
+          </div>
+
+          <div class="text-left mt-3" style="font-size: 14px">
+            <span
+              v-for="option in getBasketLineOptions(item)"
+              :key="option"
+              class="text-left d-block font-weight-normal bg-transparent ml-1"
+            >
+              [[ option ]]
+            </span>
+          </div>
+
+          <div class="cart-item-amount">
+            <div class="d-flex justify-content-center align-items-center">
+              <button
+                type="button"
+                @click="debounceUpdateItem(item, item.quantity - 1)"
+                class="btn cart-item-amount-action-decrement"
+              >
+                <span aria-hidden="true">-</span>
+              </button>
+              <p class="mb-0 mx-4 font-weight-bold h5">[[ item.quantity ]]</p>
+              <button
+                type="button"
+                @click="debounceUpdateItem(item, item.quantity + 1)"
+                class="btn cart-item-amount-action-increment"
+              >
+                <span aria-hidden="true">+</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-else>
+    {% include "oscar/theme/justeat/partials/empty_basket.html" %}
+  </div>
+  <div class="p-4 d-none" :class="{ 'd-block': store.state.cart.length }">
+    <div class="h6 pb-3 mb-0">
+      <div class="d-flex justify-content-between">
+        <span>Subtotal</span>
+        <span>{{s_config.currency}}[[total]]</span>
+      </div>
+      <div class="mt-1 font-weight-bold d-flex justify-content-between">
+        <span>Total</span>
+        <span>{{s_config.currency}}[[total]]</span>
+      </div>
+    </div>
+    <a href="/checkout" class="go-to-checkout-btn">
+      Checkout ({{s_config.currency}}[[total]])
+    </a>
+  </div>
+</div>

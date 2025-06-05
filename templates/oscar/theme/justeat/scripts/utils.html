@@ -1,0 +1,30 @@
+<script>
+    function httpToHttps(url) {
+        const isHttps = window.location.protocol === "https:";
+        return isHttps ? url.replace("http://", "https://") : url;
+    }
+
+    function getCsrfToken() {
+        // Extract CSRF token from cookies
+        const cookies = document.cookie.split(";");
+        let csrf_token = null;
+        $.each(cookies, function (index, cookie) {
+            var cookieParts = $.trim(cookie).split("=");
+            if (cookieParts[0] == "csrftoken") {
+                csrf_token = cookieParts[1];
+            }
+        });
+        // Extract from cookies fails for HTML-Only cookies
+        if (!csrf_token) {
+            csrf_token = $(document.forms.valueOf()).find(
+                '[name="csrfmiddlewaretoken"]'
+            )[0]?.value;
+        }
+        return csrf_token;
+    }
+
+    const utils = {
+        httpToHttps,
+        getCsrfToken,
+    }
+</script>

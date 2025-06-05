@@ -1,0 +1,468 @@
+{% extends 'oscar/dashboard/layout.html' %}
+{% load i18n %}
+
+
+{% block breadcrumbs %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{{ homepage_url }}">{% trans "Home" %}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{% trans "Schedule" %}</li>
+    </ol>
+</nav>
+<style>
+    .range-slider {
+        --ColorPrimaryDk: #193957;
+        --ColorPrimaryLt: #007bff;
+        --range-slider-common-height: 8px;
+        --range-slider-handle-width: 16px;
+        --range-slider-handle-height: 16px;
+        --range-slider-handle-radius: 50%;
+
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 99%;
+        height: 100%;
+    }
+
+    .range-slider > div {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        left: 13px;
+        right: 15px;
+        height: var(--range-slider-common-height);
+    }
+
+    .range-slider > div > .range-slider-val-left, 
+    .range-slider > div > .range-slider-val-right, 
+    .range-slider > div > .range-slider-val-range {
+        height: 10px;
+    }
+
+    .range-slider > div > .range-slider-val-left {
+        position: absolute;
+        left: 0;
+        border-radius: 16px;
+        background-color: #ccc;
+        margin: 0 7px;
+    }
+
+    .range-slider > div > .range-slider-val-right {
+        position: absolute;
+        right: 0;
+        margin: 0 7px;
+        border-radius: 16px;
+        background-color: #ccc;
+    }
+
+    .range-slider > div > .range-slider-val-range {
+        position: absolute;
+        left: 0;
+        top: -1px;
+        height: var(--range-slider-common-height);
+        border-radius: 14px;
+        background-color: var(--ColorPrimaryLt);
+    }
+
+    .range-slider > div > .range-slider-handle {
+        z-index: 1;
+        position: absolute;
+        top: -5px;
+        margin-left: -11px;
+        width: var(--range-slider-handle-width);
+        height: var(--range-slider-handle-height);
+        border-radius: var(--range-slider-handle-radius);
+        background-color: #fff;
+        text-align: left;
+        
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        outline: none;
+        cursor: pointer;
+    }
+
+    div.range-slider > input[type="range"]::-ms-thumb {
+        width: var(--range-slider-handle-width);
+        height: var(--range-slider-handle-height);
+        border: 0 none;
+        border-radius: 0px;
+        background: red;
+        
+        pointer-events: all;
+        
+    }
+
+    div.range-slider > input[type="range"]::-moz-range-thumb {
+        width: var(--range-slider-handle-width);
+        height: var(--range-slider-handle-height);
+        border: 0 none;
+        border-radius: 0px;
+        background: red;
+        
+        pointer-events: all;
+    }
+
+    div.range-slider > input[type="range"]::-webkit-slider-thumb {
+        width: var(--range-slider-handle-width);
+        height: var(--range-slider-handle-height);
+        border: 0 none;
+        border-radius: 0px;
+        background: red;
+        
+        pointer-events: all;
+        -webkit-appearance: none;
+    }
+
+    div.range-slider > input[type="range"]::-ms-fill-lower {
+        background: transparent;
+        border: 0 none;
+    }
+
+    div.range-slider > input[type="range"]::-ms-fill-upper {
+        background: transparent;
+        border: 0 none;
+    }
+
+    .range-slider > input[type="range"] {
+        z-index: 1;
+        position: absolute;
+        width: 100%;
+        height: var(--range-slider-common-height);
+        
+        opacity: 0;
+        filter: alpha(opacity=0);
+        cursor: pointer;
+        pointer-events: none;
+        -webkit-appearance: none;
+    }
+
+    div.range-slider > input[type="range"]::-ms-track {
+        background: transparent;
+        color: transparent;
+        
+        -webkit-appearance: none;
+    }
+
+    div.range-slider > input[type="range"]::-moz-range-track {
+        background: transparent;
+        color: transparent;
+        
+        -moz-appearance: none;
+    }
+
+    div.range-slider > input[type="range"]:focus::-webkit-slider-runnable-track {
+        background: transparent;
+        border: transparent;
+    }
+
+    div.range-slider > input[type="range"]:focus {
+        outline: none;
+    }
+
+    div.range-slider > input[type="range"]::-ms-tooltip {
+        display: none;
+    }
+
+    .range-slider > div > .range-slider-tooltip {
+        z-index: 2;
+        position: absolute;
+        top: -42px;
+        margin-left: -34px;
+        width: 60px;
+        height: 28px;
+        border-radius: 16px;
+        background-color: var(--ColorPrimaryLt);
+        color: #fff;
+        text-align: center;
+        
+        opacity: 0;
+    }
+
+    .range-slider > div > .range-slider-tooltip:after {
+        content: "";
+
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 19px;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        border-top-width: 16px;
+        border-top-style: solid;
+        border-top-color: var(--ColorPrimaryLt);
+        border-radius: 16px;
+    }
+
+    .range-slider > div > .range-slider-tooltip > span {
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 28px;
+    }
+
+    .range-slider:hover > div > .range-slider-tooltip {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block headertext %}Schedule{% endblock %}
+{% block content %}
+<div v-cloak id="schedule-settings">
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        
+        <a
+          v-for="day in allDays"
+          class="nav-item nav-link"
+          :class="{ active: currentDay === day }"
+          :id="'nav-' + day"
+          :href="'#nav-' + day"
+          data-toggle="tab" 
+          @click="navigateToDay(day)"
+          role="tab" aria-controls="nav-home">
+          [[ day ]] [[ form[day]?.copied ? '(copied)' : '' ]]
+        </a>
+
+
+    </div>
+    <div class="p-4 pt-2 bg-white border border-top-0">
+      <div class="mt-3">
+          <label class="form-label d-block">Add new period</label>
+          <div class="d-flex justify-content-between">
+              <div class="form-inline">
+                  <select ref="periodSelectType" class="form-control" :disabled="disableAddPeriod" name="p">
+                      <option selected>[[ disableAddPeriod ? 'No period type' : 'Select period type' ]]</option>
+                      <option v-for="period_type in remainingPeriodTypes" :value="period_type">[[ period_type ]]</option>                 
+                  </select>
+                  <button type="submit" class="btn btn-primary ml-2" @click="addPeriod($refs.periodSelectType.value)" :disabled="disableAddPeriod">Add</button>
+              </div>
+              <button type="submit" class="btn btn-primary" :class="{ 'd-none': !formChanged }" @click="saveSchedule">[[ saving ? 'Saving...' : 'Save']]</button>
+          </div>
+      </div>
+      <div class="tab-content" id="myTabContent">
+          <div v-for="(type, index) in periodTypes">    
+              <label class="form-label d-block mt-3">
+                  [[type]]
+              </label>
+              <div class="d-flex">
+                  <div class="row range-slider m-3">
+                      <div>
+                          <div class="range-slider-val-left" :style="{ width: toPercent(periods[type].min) + '%' }"></div>
+                          <div class="range-slider-val-right" :style="{ width: (100 - toPercent(periods[type].max)) + '%' }"></div>
+                          <div class="range-slider-val-range" :style="{ left: toPercent(periods[type].min) + '%', right: (100 - toPercent(periods[type].max)) + '%' }"></div>
+
+                          <div class="range-slider-handle" :style="{ left: toPercent(periods[type].min) + '%' }"></div>
+                          <div class="range-slider-handle" :style="{ left: toPercent(periods[type].max) + '%' }"></div>
+
+                          <div class="range-slider-tooltip" :style="{ left: toPercent(periods[type].min) + '%' }">
+                              <span class="range-slider-tooltip-text">[[ formatTime(periods[type].min) ]]</span>
+                          </div>
+                          <div class="range-slider-tooltip" :style="{ left: toPercent(periods[type].max) + '%' }">
+                              <span class="range-slider-tooltip-text">[[ formatTime(periods[type].max) ]]</span>
+                          </div>
+                      </div>
+
+                      <input type="range" class="range-slider-input-left" tabindex="0" max="1440" min="0" step="1" :value="periods[type].min" @input="updateSlider($event, type, true)">
+                      <input type="range" class="range-slider-input-right" tabindex="0" max="1440" min="0" step="1" :value="periods[type].max" @input="updateSlider($event, type, false)">
+                  </div>
+                  <button type="submit" class="btn btn-danger ml-2" @click="deletePeriod(type)">Delete</button>
+              </div>
+          </div>
+          
+          
+      </div>
+      <div class="mt-3">
+          <label class="form-label d-block">Copy values</label>
+          <div class="form-inline">
+              <select class="form-control" name="p" v-model="copyFrom" >
+                  <option selected value="">Select from day</option>
+                  <option v-for="day in allDays" :value="day">[[ day ]]</option>
+              </select>
+              <span class="mx-2">-</span>
+              <select class="form-control" name="p" v-model="copyTo">
+                  <option selected value="">Select to day</option>
+                  <option v-for="day in allDays" :value="day">[[ day ]]</option>
+              </select>
+              <button type="submit" class="btn btn-primary ml-2" @click="copyDay">Copy</button>
+          </div>
+      </div>  
+    <div>
+</div>
+{% endblock %}
+
+{% block onbodyload %}
+    $('[id^=datetimepicker]').datetimepicker({
+        format: 'HH:mm'
+    });
+
+    const scheduleSettings = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#schedule-settings',
+        data() {
+            return {
+              saving: false,
+              allPeriodTypes: [
+                {% for period_type in period_types %}
+                  '{{ period_type }}',
+                {% endfor %}
+              ],
+              allDays: [
+                {% for day in days %}
+                  '{{ day }}',
+                {% endfor %}
+              ],
+              currentDay: 'Monday',  
+              defaultFormValues: {},
+              form: {},
+              rangeSliderMin: 0,
+              rangeSliderMax: 24 * 60 - 1,
+              copyFrom: '',
+              copyTo: '',
+            };
+          },
+          mounted() {
+            this.init();
+          },
+          computed: {
+            formChanged() {
+              return JSON.stringify(this.form) !== JSON.stringify(this.defaultFormValues);
+            },
+            periods() {
+              return this.form?.[this.currentDay]?.periods ?? {};
+            },
+            periodTypes() {
+              return Object.keys(this.form?.[this.currentDay]?.periods ?? {});
+            },
+            remainingPeriodTypes() {
+              return this.allPeriodTypes.filter((type) => !this.periodTypes.includes(type));
+            },
+            disableAddPeriod() {
+              return this.remainingPeriodTypes.length === 0;
+            },
+          },
+          methods: {
+
+            fetchSchedule() {
+              // Fetch schedule from API
+            },
+            async saveSchedule() {
+              this.saving = true;
+
+              console.log("Saving schedule...", this.form);
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              this.saving = false; 
+              // Save schedule to API
+            },
+
+            // ACTIONS
+            deletePeriod(type) {
+              const newForm = { ...this.form };
+              delete newForm[this.currentDay].periods[type];
+
+              this.form = newForm;
+            },
+            addPeriod(type) {
+              if (!this.isValidType) return;
+
+              const newForm = { ...this.form };
+              newForm[this.currentDay].periods[type] = {
+                min: this.rangeSliderMin,
+                max: this.rangeSliderMax,
+              };
+              newForm[this.currentDay].periods = this.orderObjectToAlphabetical(newForm[this.currentDay].periods);
+
+              this.form = newForm;
+            },
+
+            navigateToDay(day) {
+              this.currentDay = day;
+              const newForm = { ...this.form };
+              newForm[this.currentDay].copied = false;
+
+              this.form = newForm;
+            },
+            copyDay() {
+              if(!this.isValidDay(this.copyFrom) || !this.isValidDay(this.copyTo)) return;
+
+              const newForm = { ...this.form };
+              newForm[this.copyTo] = JSON.parse(JSON.stringify(newForm[this.copyFrom]));
+              newForm[this.copyTo].copied = true;  
+
+              this.form = newForm;
+            },
+        
+            setSliderPositions(period, min, max) {
+              this.periods[period].min = min;
+              this.periods[period].max = max;
+            },
+            updateSlider(e, type, isLeft) {
+              let minInput = this.periods[type].min;
+              let maxInput = this.periods[type].max;
+      
+              if (isLeft) {
+                minInput = Math.min(e.target.value, maxInput - 1); // Ensure left handle stays to the left
+              } else {
+                maxInput = Math.max(e.target.value, minInput + 1); // Ensure right handle stays to the right
+              }
+      
+              const min = parseInt(minInput);
+              const max = parseInt(maxInput);
+      
+              this.setSliderPositions(type, min, max);
+            },
+
+            // UTILS
+            orderObjectToAlphabetical(obj) {
+              return Object.keys(obj)
+                .sort()
+                .reduce((acc, key) => {
+                  acc[key] = obj[key];
+                  return acc;
+                }, {});
+            },
+            isValidType(type) {
+              return this.allPeriodTypes.includes(type);
+            },
+            isValidDay(day) {
+              return this.allDays.includes(day);
+            },
+            toPercent(value, min = this.rangeSliderMin, max = this.rangeSliderMax) {
+              return ((value - min) / (max - min)) * 100;
+            },
+            formatTime(minutes) {
+              const hours = Math.floor(minutes / 60);
+              const mins = minutes % 60;
+              return `${hours.toString().padStart(2, "0")}:${mins
+                .toString()
+                .padStart(2, "0")}`;
+            },
+
+            // INITIAL
+            init() {
+              this.initializeForm();
+              this.initializeSliders();
+            },
+            initializeForm() {
+              const newForm = {}
+              for (const day of this.allDays) {
+                for (const period of this.allPeriodTypes) {
+                  if(!newForm[day]) newForm[day] = { periods: {} };
+                  if(!newForm[day].periods[period]) newForm[day].periods[period] = {};
+
+                  newForm[day].periods[period].min = this.rangeSliderMin;
+                  newForm[day].periods[period].max = this.rangeSliderMax;
+                  newForm[day].copied = false;
+                }
+              }
+              this.form = newForm;
+              this.defaultFormValues = JSON.parse(JSON.stringify(this.form));
+            },
+            initializeSliders() {
+              for (const key in this.periods) {
+                this.setSliderPositions(key, this.rangeSliderMin, this.rangeSliderMax);
+              }
+            },
+          },
+    })
+{% endblock %}

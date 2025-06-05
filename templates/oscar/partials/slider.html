@@ -1,0 +1,129 @@
+{% load system_tags %}
+{% get_slider as slider_list %}
+<div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel" data-interval="8000">
+    <ol class="carousel-indicators">
+        {% for index, item in slider_list %}
+        <li data-target="#carouselExampleIndicators" data-slide-to="{{ index }}" {% if index == 0 %}class="active" {% endif %}></li>
+        {% endfor %}
+    </ol>
+    <div class="carousel-inner">
+        {% for index, item in slider_list %}
+        <div class="carousel-item {% if index == 0 %}active{% endif %}">
+            <div class="row" style="width:90%;margin:auto">
+<!--carousel-caption-->
+                <div class="col-md-5 d-none d-md-block"  style="margin:auto">
+                    <p class="ttitle slide-title">{{ item.title }}</p>
+                    <p class="tname slide-name">{{ item.name }}</p>
+                    <p class="tcontent slide-content">{{ item.content }}</p>
+                    <button class="btn btn-primary fade-in-button butt"> {{item.button_label}}</button>
+                </div>
+                <div class="col-md-7">
+                    <img style="width: 80%;margin:auto" class="d-block slide-in-image" src="{{ item.image }}">
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<style>
+    .carousel-indicators{
+        width: initial;
+    }
+    .carousel-indicators li {
+        background-color: #9c9ca3!important;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        width: 12px!important;
+        height: 12px!important;
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    .carousel-indicators .active {
+        background-color: {{s_config.header_background}}!important;
+    }
+    .butt{
+        background-color: #0090f0;
+        border-color: #0090f0;
+        text-transform: uppercase;
+        font-size: 15px !important;
+        font-weight: 400 !important;
+        padding: 3px 15px;
+        line-height: 2.6rem !important;
+        border-radius: 20px;
+    }
+    .ttitle{
+        font-size: 18px;
+        color: #253237;
+        font-weight: 400;
+        line-height: 1;
+        margin-bottom: 15px;
+    }
+    .tname{
+        font-size: 35px;
+        color: #253237;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+    .tcontent{
+        font-size: 20px;
+        margin-top: 2rem;
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .slide-name {
+      opacity: 0;
+      animation: slideIn 1s ease forwards;
+      animation-delay: 3s;
+    }
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .slide-in-image {
+        opacity: 0;
+        animation: slideDown 1s ease forwards;
+        animation-delay: 1s;
+    }
+
+    .slide-title {
+     opacity: 0;
+      animation: slideDown 1s ease forwards;
+      animation-delay: 2s;
+    }
+    .slide-content {
+     opacity: 0;
+      animation: slideDown 1s ease forwards;
+      animation-delay: 4s;
+    }
+    @keyframes fadeInButton {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .fade-in-button {
+     opacity: 0;
+      animation: fadeInButton 1s ease forwards;
+      animation-delay: 5s;
+    }
+</style>

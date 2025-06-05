@@ -1,0 +1,80 @@
+{% load custom_category_tags %} {% category_tree as tree_categories %}
+<style>
+  .categories {
+    position: sticky;
+    top: 20px;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .categories__title {
+    display: none;
+  }
+
+  .categories__menu {
+    margin: 70px 0 0 16px;
+    list-style: none;
+    list-style-image: none;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .categories__menu__item {
+    list-style: none;
+    list-style-image: none;
+    font-size: 20px;
+    line-height: 1.5;
+  }
+
+  .categories__menu__item a {
+    border-left: 1px solid #dbd9d7;
+    display: block;
+    overflow: hidden;
+    padding: 8px 16px;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #242e30;
+  }
+
+  .categories__menu__item.active,
+  .categories__menu__item a:hover {
+    color: #242e30;
+    border-left: 2px solid #575655;
+    font-weight: 700;
+    margin-left: -1px;
+    text-decoration: none;
+  }
+</style>
+
+{% if tree_categories %}
+<nav id="categories-nav" class="categories">
+  <h2 id="categories__title" class="categories__title">Categories</h2>
+  <ul class="categories__menu">
+    {% for tree_category in tree_categories %}
+      {% if tree_category.category.id == category.pk %}  
+        <li class="categories__menu__item active">
+          <a href="{{ tree_category.category.url }}" data="{{tree_category.category.name}}">
+              {{ tree_category.category.name }}
+            </a>
+        </li>
+      {% else %}
+        <li class="categories__menu__item">
+          <a href="{{ tree_category.category.url }}" data="{{tree_category.category.name}}">
+              {{ tree_category.category.name }}
+            </a>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+</nav>
+{% endif %}
+
+{% block extrascripts %}
+    <script>
+        new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#categories-nav',
+        })
+    </script>
+{% endblock %}

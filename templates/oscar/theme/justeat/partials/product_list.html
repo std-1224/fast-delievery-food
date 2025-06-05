@@ -1,0 +1,910 @@
+{% load i18n %}
+{% load static %}
+
+<style>
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .page-link {
+        display: block;
+        text-decoration: none;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .page-link:hover,
+    .page-link.active {
+        background-color: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .product-item {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+
+    .product-item:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-item-list {
+        width: 100%;
+        display: flex;
+        background: none;
+        border: none;
+        color: #242e30;
+        font-size: 16px;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        padding: 16px;
+        text-align: left;
+        border: 1px solid #efedea;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .item-content {
+        overflow-wrap: anywhere;
+    }
+
+    .item-image-container {
+        flex-shrink: 0;
+        height: 100px;
+        margin-left: auto;
+        padding-left: 8px;
+    }
+
+    .item-image {
+        aspect-ratio: 4 / 3;
+        border: 1px solid #efedea;
+        border-radius: 8px;
+        box-sizing: content-box;
+        height: 99px;
+        width: 132px;
+        object-fit: cover;
+        padding: 0;
+    }
+
+    .image_container1 {
+        min-height: 150px;
+        overflow: hidden;
+        text-align: center;
+        position: relative;
+    }
+
+
+    /* Modal */
+    .modal-content {
+        height: 100%;
+        max-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .modal-header-btn {
+        display: flex;
+        opacity: .9;
+        position: absolute;
+        right: 16px;
+        top: 22px;
+        z-index: 9000;
+        height: 32px;
+        padding: 0;
+        width: 32px;
+        align-items: center;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        text-size-adjust: 100%;
+        background-color: #fff;
+        border-color: #fff;
+        outline: none;
+    }
+
+    .product-image__container {
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        overflow: hidden;
+        position: relative;
+    }
+    .product-image__container::before {
+        bottom: 8px;
+        box-shadow: inset 0 -4px 6px 0 rgba(27, 35, 36, .08), 0 -2px 12px -2px rgba(27, 35, 36, .32), 0 -3px 6px 0 rgba(27, 35, 36, .24);
+        content: "";
+        height: 100%;
+        position: absolute;
+        width: 100%;
+    }
+    .product-image__container img {
+        aspect-ratio: 4 / 3;
+        width: 100%;
+    }
+
+    .modal-title-container {
+        text-align: center;
+    }
+    .modal-title {
+        font-weight: 800;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+        margin-top: 0;
+        padding: 24px 16px 16px;
+    }
+    .modal-price {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        margin: 0 0 16px;
+    }
+    .modal-description {
+        font-size: 1rem;
+        line-height: 1.5;
+        margin: 8px 24px;
+    }
+
+    .modal-details-info {
+        font-size: .875rem;
+        line-height: 1.43;
+        margin-top: 8px;
+    }
+    .modal-nutrition {
+        color: #3c4c4f;
+        font-size: 12px;
+        font-size: .75rem;
+        line-height: 1.33;
+        line-height: 0;
+        margin-top: 8px;
+    }
+
+    .modal-required-actions {
+        align-items: center;
+        background-color: #fcfcfc;
+        display: flex;
+        flex-direction: column;
+        padding: 32px;
+    }
+
+    .modal-actions {
+        background-color: #fff;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+        bottom: 0;
+        box-shadow: 0 -4px 6px 0 rgba(27, 35, 36, .02), 0 -2px 12px -2px rgba(27, 35, 36, .08), 0 -3px 6px 0 rgba(27, 35, 36, .06);
+        padding: 16px;
+        position: -webkit-sticky;
+        position: sticky;
+        width: 100%;
+        z-index: 5;
+    }
+    
+    /* CHECKBOX */
+    .checkbox-wrapper [type="checkbox"]:checked + label,
+    .checkbox-wrapper [type="checkbox"]:not(:checked) + label
+    {
+        position: relative;
+        padding-left: 28px;
+        cursor: pointer;
+        line-height: 20px;
+        display: inline-block;
+        color: #666;
+    }
+    .checkbox-wrapper  [type="checkbox"]:checked + label:before,
+    .checkbox-wrapper  [type="checkbox"]:not(:checked) + label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ddd;
+        border-radius: 2px;
+        background: #fff;
+    }
+    .checkbox-wrapper [type="checkbox"]:checked + label:after,
+    .checkbox-wrapper [type="checkbox"]:not(:checked) + label:after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: #007bff;
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        border-radius: 3px;
+        -webkit-transition: all 0.2s ease;
+        transition: all 0.2s ease;
+    }
+    .checkbox-wrapper [type="checkbox"]:not(:checked) + label:after {
+        opacity: 0;
+        -webkit-transform: scale(0);
+        transform: scale(0);
+    }
+    .checkbox-wrapper [type="checkbox"]:checked + label:after {
+        opacity: 1;
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+    
+    /* RADIO */
+    #productModal [type="radio"]:checked + label,
+    #productModal [type="radio"]:not(:checked) + label
+    {
+        position: relative;
+        padding-left: 28px;
+        cursor: pointer;
+        line-height: 20px;
+        display: inline-block;
+        color: #666;
+    }
+    #productModal  [type="radio"]:checked + label:before,
+    #productModal  [type="radio"]:not(:checked) + label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ddd;
+        border-radius: 100%;
+        background: #fff;
+    }
+    #productModal [type="radio"]:checked + label:after,
+    #productModal [type="radio"]:not(:checked) + label:after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: #007bff;
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        border-radius: 100%;
+        -webkit-transition: all 0.2s ease;
+        transition: all 0.2s ease;
+    }
+    #productModal [type="radio"]:not(:checked) + label:after {
+        opacity: 0;
+        -webkit-transform: scale(0);
+        transform: scale(0);
+    }
+    #productModal [type="radio"]:checked + label:after {
+        opacity: 1;
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+
+    .field--invalid {
+        border-bottom: 2px solid #d50525;
+        color: #d50525;
+    }
+</style>
+
+<div v-cloak id="app" class="w-100">
+    <div class="row text-center m-auto w-100">
+        <div v-for="p in products" class="col-12" @click="selectProduct(p)">
+            <button class="product-item-list" @click="selectProduct(p)" >
+                <div class="item-content">
+                    <h3 class="font-weight-bold" style="font-size: 1.25rem;">[[ p.title ]]
+                    </h3>
+                    <p class="card-title mt-2" v-html="p.description"/>
+                    <!-- <p class="item-nutrition-info" style="font-size: 0.875rem; margin-bottom: 8px;">
+                        from 1371 kJ/328 kcal
+                    </p> -->
+                    <p class="card-text font-weight-bold" v-if="p.price !== null">
+                        {{ s_config.currency }}[[ p.price ]]
+                    </p>
+                    <p class="card-text font-weight-bold" v-else="p.price !== null">
+                        Not Available
+                    </p>
+
+                </div>
+                <div class="item-image-container">
+                    <img :src="p.original" class="card-img-top img-thumbnail item-image" alt="Product Image">
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                    <a class="page-link" @click.prevent="fetchProducts(currentPage - 1)" href="#"
+                        aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                <li v-for="pageNumber in Array.from({ length: totalPages }, (_, i) => i + 1)" :key="pageNumber"
+                    class="page-item" :class="{ 'active': pageNumber === currentPage }">
+                    <a class="page-link" @click.prevent="fetchProducts(pageNumber)" href="#">[[ pageNumber ]]</a>
+                </li>
+                <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                    <a class="page-link" @click.prevent="fetchProducts(currentPage + 1)" href="#" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-md-fullscreen" role="document">
+            <div class="modal-content">
+                <div class="overflow-auto">
+                    <header>
+                        <button
+                            type="button"
+                            data-dismiss="modal"
+                            aria-label="Close"
+                            class="btn modal-header-btn"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 14 14"
+                            >
+                                <path
+                                    d="M10.8676 2.20496L7.0001 6.07248L3.13258 2.20496L2.20508 3.13246L6.0726 6.99998L2.20508 10.8675L3.13258 11.795L7.0001 7.92748L10.8676 11.795L11.7951 10.8675L7.92761 6.99998L11.7951 3.13246L10.8676 2.20496Z"
+                                ></path>
+                            </svg>
+                        </button>
+                    </header>
+
+                    <div class="product-image__container">
+                        <img v-if="selectedProduct && selectedProduct.product" :src="selectedProduct.product.original" alt="Product Image">
+                    </div>
+                    <div class="modal-title-container">
+                        <h1 v-if="selectedProduct && selectedProduct.product" class="modal-title">
+                            <span>
+                                [[ selectedProduct.product.title ]]
+                            </span>
+                        </h1>
+                    </div>
+                    <p class="modal-price text-center">
+                        {{ s_config.currency }}
+                        <span
+                        v-if="selectedProduct && selectedProduct.product">[[ selectedProduct.product.price
+                        ]]</span>
+                        <span v-else>0.00</span>
+                    </p>
+                    <p class="modal-description text-center" v-if="selectedProduct?.product" v-html="selectedProduct.product.description" /> 
+                    <!-- <div>
+                        <p class="modal-details-info text-center">
+                            from 2948 kJ/703 kcal
+                        </p>
+                        <p class="modal-nutrition text-center">
+                            Adults need around 2000 kcal a day. Equal to 8400 kJ.
+                        </p>
+                    </div> -->
+                    <div>
+                        <div v-for="option in options" :key="option.id" :data-option-id="option.id">
+                            <fieldset>
+                                <legend class="w-100 p-3 bg-light sticky-top mb-0" :class="{'field--invalid': state.invalid && invalidOptions.includes(option.id) }" style="z-index: 3;">
+                                    <span class="h6 d-flex justify-content-between align-items-center mb-0">
+                                        <span class="w-100 font-weight-bold">[[ option.name ]]</span>
+                                        <span v-if="option.required" class="badge badge-pill" :class="{'badge-dark': !state.invalid || !invalidOptions.includes(option.id), 'badge-danger': state.invalid && invalidOptions.includes(option.id) }">Required</span>
+                                        <span v-else class="badge badge-pill badge-light">Optional</span>
+                                    </span>
+                                </legend>
+                                <div>
+                                    <div v-if="selectedProduct.options[option.id]">
+                                        <!-- TEXT -->
+                                        <template v-if="option.type === 'text'">
+                                            <div class="px-3 py-1"> 
+                                                <input type="text" class="form-control" v-model="selectedProduct.options[option.id].value" />
+                                            </div>
+                                        </template>
+                                         <!-- DATE PICKER -->
+                                         <template v-if="option.type === 'date'">
+                                            <div class="px-3 py-1"> 
+                                                <input type="date" class="form-control" v-model="selectedProduct.options[option.id].value" />
+                                            </div>
+                                        </template>
+                                        <!-- BOOLEAN -->
+                                        <template v-if="option.type === 'boolean'">
+                                            <div class="px-3 py-1"> 
+                                                <div class="custom-control custom-switch">
+                                                    <input type="checkbox" class="custom-control-input" id="customSwitch1" v-model="selectedProduct.options[option.id].value" >
+                                                    <label class="custom-control-label" for="customSwitch1">Toggle this switch element</label>
+                                                  </div>
+                                            </div>
+                                        </template>
+                                         <!-- INTEGER -->
+                                         <template v-if="option.type === 'integer'">
+                                            <div class="px-3 py-1"> 
+                                                <input type="number" min="0" step="1" oninput="this.value=this.value.replace(/[^0-9]/g,'');" class="form-control" v-model="selectedProduct.options[option.id].value" />
+                                            </div>
+                                        </template>
+                                        <!-- FLOAT -->
+                                        <template v-if="option.type === 'float'">
+                                            <div class="px-3 py-1"> 
+                                                <input type="number" step="0.01" class="form-control" v-model="selectedProduct.options[option.id].value" />
+                                            </div>
+                                        </template>
+                                        <!-- SELECT -->
+                                        <template v-if="option.type === 'select'">
+                                            <div class="px-3 py-1"> 
+                                                <select  class="custom-select" v-model="selectedProduct.options[option.id].value">
+                                                    <option value="">Select an option</option>
+                                                    <option v-for="attr in option.option_group.options" :key="attr.key" :value="attr.key">[[ attr.option ]]</option>
+                                                  </select>
+                                            </div>
+                                        </template>
+                                        <!-- MULTIPLE SELECT -->
+                                        <template v-if="option.type === 'multi_select'">
+                                            <div class="px-3 py-1"> 
+                                                <select multiple class="custom-select" @change="updateProductOptions(option.id, $event, option.type)">
+                                                    <option v-for="attr in option.option_group.options" :key="attr.key" :value="attr.key" :selected="selectedProduct.options[option.id].value?.includes(attr.key)" >[[ attr.option ]]</option>
+                                                  </select>
+                                            </div>
+                                        </template>
+                                        <!-- RADIO -->
+                                        <template v-else-if="option.type === 'radio'">
+                                                <div v-for="attr in option.option_group.options" :key="attr.key" :value="attr.key" class="p-3 border-bottom">
+                                                    <input hidden :id="attr.key" type="radio" :value="attr.key" :name=option.name v-model="selectedProduct.options[option.id].value" >
+                                                    <label :for="attr.key" class="w-100 mb-0">
+                                                        <span>
+                                                            <span class="d-flex justify-content-between">
+                                                                <span class="flex-grow-1 d-flex flex-column">   
+                                                                    <span class="font-weight-bold">
+                                                                        [[ attr.option ]]
+                                                                    </span>
+                                                                    <span v-if="attr.help_text">
+                                                                        [[ attr.help_text ]]
+                                                                    </span>
+                                                                </span>
+                                                                <span v-if="attr.price && attr.price > 0" class="text-success">+{{ s_config.currency }}[[ attr.price ]]</span>
+                                                            </span>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                        </template>
+                                        
+                                        <!-- CHECKBOX -->
+                                        <template v-else-if="option.type === 'checkbox'">
+                                                <div v-for="attr in option.option_group.options" :key="attr.key" :value="attr.key" class="p-3 border-bottom checkbox-wrapper">
+                                                    <input hidden :id="attr.key" type="checkbox" @change="updateProductOptions(option.id, attr.key, option.type)" :checked="selectedProduct.options[option.id].value?.includes(attr.key)" :name=option.name >
+                                                    <label :for="attr.key" class="w-100 mb-0">
+                                                        <span>
+                                                            <span class="d-flex justify-content-between">
+                                                                <span class="w-100 d-flex flex-column">   
+                                                                    <span class="font-weight-bold">
+                                                                        [[ attr.option ]]
+                                                                    </span>
+                                                                    <span v-if="attr.help_text">
+                                                                        [[ attr.help_text ]]
+                                                                    </span>
+                                                                </span>
+                                                                <span v-if="attr.price && attr.price > 0" class="text-success">+{{ s_config.currency }}[[ attr.price ]]</span>
+                                                            </span>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                        </template>
+                                        
+                                    </div>
+                                </div>
+                            </fieldset>
+                            
+                        </div>
+                    </div>
+                    <div class="modal-required-actions">
+                        <button class="btn btn-primary btn-lg rounded-circle d-flex justify-content-center align-items-center" style="width: 48px; height: 48px;"  @click="scrollToInvalidOption">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" style="stroke: white; fill: white;"><path d="M7.65625 13.125V2.93126L10.9463 6.22126L11.8738 5.29376L7.77 1.19876C7.66915 1.09717 7.54919 1.01654 7.41704 0.961522C7.28488 0.906501 7.14315 0.878174 7 0.878174C6.85685 0.878174 6.71512 0.906501 6.58296 0.961522C6.45081 1.01654 6.33085 1.09717 6.23 1.19876L2.12625 5.29376L3.05375 6.22126L6.34375 2.93126V13.125H7.65625Z"></path></svg>
+                        </button>
+                        <button class="btn btn-link" @click="scrollToInvalidOption">
+                            See what you missed
+                        </button>
+                        <p>
+                            Make sure you pick all your options for this item. You’re almost there
+                        </p>
+                    </div>
+
+                    <div class="modal-actions">
+                        <div v-if="selectedProduct" class="d-flex justify-content-center align-items-center mb-4">
+                            <button
+                            type="button"
+                            :disabled=" selectedProduct.quantity <= (selectedProduct.existed ? 0 : 1)" @click="selectedProduct.quantity--"
+                            class="btn cart-item-amount-action-decrement"
+                            >
+                            <span aria-hidden="true">-</span>
+                            </button>
+                            <p class="mb-0 mx-4 font-weight-bold h5">[[ selectedProduct.quantity ]]</p>
+                            <button
+                            type="button"
+                            @click="selectedProduct.quantity++"
+                            class="btn cart-item-amount-action-increment"
+                            >
+                            <span aria-hidden="true">+</span>
+                            </button>
+                        </div>
+                         
+                        <button type="button" @click="addProductToCart" class="btn btn-primary btn-lg w-100 d-flex justify-content-between rounded-pill" :disabled="state.addingToCart || invalidOptions.length > 0">
+                            <span v-if="state.addingToCart" class="w-100">
+                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            </span>
+                            <template v-else>
+                                <span v-if="selectedProduct.existed">Update item to order</span>
+                                <span v-else>Add to order</span>
+                                <span data-test-id="total-price" class="notranslate">{{ s_config.currency }}[[ totalCurrentLine ]]</span>
+                            </template>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extrascripts %}
+<script>
+    const delay = (ms = 2000) => new Promise(res => setTimeout(res, ms));
+
+    const productList = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        data: {
+            state: {
+                addingToCart: false,
+                loadingProduct: false,
+                loadingProducts: false,
+                invalid: false,
+            },
+
+            products: [],
+            options: [],
+            selectedProduct: {
+                product: null,
+                quantity: 1,
+                options: {}
+            },
+            totalCurrentLine: 0,
+            currentPage: 1,
+            totalPages: 0,
+            store: store
+
+        },
+        mounted() {
+            this.fetchProducts();
+            this.initialBasket();
+            this.initialState();
+
+            $('#productModal').on('hidden.bs.modal', () => {
+                this.selectedProduct = {
+                    product: null,
+                    quantity: 1,
+                    options: {}
+                };
+            })
+        },
+
+        computed: {
+            invalidOptions() {
+                return this.options?.reduce((acc, option) => {
+                    if(option.required && this.selectedProduct.options[option.id]) {
+                        switch (option.type) {
+                            case 'checkbox':
+                            case 'multi_select':
+                                if(!this.selectedProduct.options[option.id].value?.length) {
+                                    acc.push(option.id);
+                                }
+                                break;
+                            default:
+                                if(!this.selectedProduct.options[option.id].value) {
+                                    acc.push(option.id);
+                                }
+                        }
+                    }
+
+                    return acc;
+                }, []) ?? [];
+            },
+        },
+        methods: {
+            scrollToInvalidOption() {
+                const invalidOption = this.invalidOptions[0];
+                const option = this.options.find(option => option.id === parseInt(invalidOption));
+
+                if(option) {
+                    this.state.invalid = true;
+                    const element = document.querySelector(`[data-option-id="${option.id}"]`);
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            },
+
+            async selectProduct(product) {
+                this.initialState()
+                const cartProduct = this.store.state.cart.find(p => p.product.id === product.id);
+
+                try {
+                    const {data: productDetails} = await this.getProductDetail(product.id)
+
+                    const productOptions = productDetails.options.sort((a, b) => {
+                        return a.required ? -1 : b.required ? 1 : 0;
+                    });
+                    const initialOptions = productOptions.reduce((acc, option) => {
+                        const value = option.type === 'multi_select' || option.type === "checkbox" ? [] : '';
+
+                        return {
+                            ...acc,
+                            [option.id]: {
+                                option_id: option.id,
+                                value,
+                            }
+                        };
+                    }, {})
+
+                    this.options = productOptions;
+                    this.selectedProduct = {
+                        ...cartProduct,
+                        product: {
+                            ...product,
+                            ...productDetails,
+                            price: productDetails.stockrecords[0].price
+                        },
+                        //TODO: Uncomment this when the cart is implemented with update the card
+                        // existed: cartProduct?.quantity > 0,
+                        // quantity: cartProduct?.quantity || 1,
+                        // options: Object.assign({}, initialOptions, cartProduct?.options || {})
+                        quantity: 1,
+                        options: initialOptions
+                    }
+
+                    $('#productModal').modal('show')
+                } catch (error) {
+                    console.error(error);
+                }
+
+            },
+
+            updateProductOptions(optionId, value, type) {
+                if(!this.selectedProduct.options[optionId]) return;
+
+                switch (type) {
+                    case "checkbox":
+                        const optionValue = this.selectedProduct.options[optionId].value;
+                        if (!optionValue.includes(value)) {
+                            this.selectedProduct.options[optionId].value.push(value);
+                        } else {
+                            this.selectedProduct.options[optionId].value = optionValue.filter(v => v !== value);
+                        }
+                        break;
+                    case "multi_select":
+                        const values = Array.from(value.target.selectedOptions).map(item => item.value);
+                        this.selectedProduct.options[optionId].value = values;
+                        break;
+                    default:
+                        this.selectedProduct.options[optionId].value = value;
+                        break;
+                }
+            },
+
+            async addProductToCart() {
+                try {
+                    this.state.addingToCart = true;
+
+                    const data = {
+                        product_id: this.selectedProduct.product.id,
+                        quantity: this.selectedProduct.quantity,
+                        options: Object.keys(this.selectedProduct.options).reduce((acc, id) => {
+                            const value = this.selectedProduct.options[id].value;
+
+                            if(Array.isArray(value) && !value.length) return acc;
+                            if(!value) return acc;
+
+                            return [...acc, {
+                                option: id,
+                                value
+                            }]
+                        }, [])
+                    }
+                    
+                    const isExisted = this.selectedProduct.existed;
+                    const isDelete = this.selectedProduct.quantity === 0;
+
+                    if(!isExisted) {
+                        console.log("Add product to cart");
+                        await this.addBasketLine(data)
+                    } else {
+                        const lineUrl = this.selectedProduct.url;
+                        if(isDelete) {
+                            console.log("Delete product to cart");
+                            await this.deleteBasketLine(lineUrl)
+                        } else {
+
+                            console.log("Update product to cart");
+                            await this.updateBasketLine(lineUrl, data)
+                        }
+                    }
+                            
+                    await this.initialBasket() 
+
+                    $('#productModal').modal('hide')
+                } catch (error) {
+                    console.log(error)
+                } finally {
+                    this.state.addingToCart = false;
+                }
+            },
+
+            async fetchProducts(page = 1, limit = 10) {
+                try {
+                    this.state.loadingProducts = true;
+                
+                    const url = new URL(window.location.href);
+                    const splitPath = url.pathname.split('/');
+                    const categoryId = splitPath[splitPath.length - 2].split('_')[1];
+                    let queryUrl = `/api/products/`;  
+                    
+                    const params = {
+                        page,
+                        limit,
+                        category_id: categoryId
+                    };
+
+                    const search = url.searchParams.get('search');
+                    if (search) {
+                        params.search = search;
+                    }
+
+                    // GET request to fetch products
+                    const response = await axios.get(queryUrl, {
+                        params
+                    })
+                    
+                    // Map products to include price and image
+                    this.products = response.data.results.map(product => {
+                        if (product.stockrecords.length > 0) {
+                            product.price = product.stockrecords[0].price;
+                        } else {
+                            product.price = null;
+                        }
+
+                        product.original = product?.primary_image.original ?? '/static/media/image_not_found.jpg' ;
+                        
+
+                        return product;
+                    });
+
+                    this.currentPage = page;
+                    this.totalPages = Math.ceil(response.data.count / limit);
+
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    this.state.loadingProducts = false;
+                }
+            },
+            
+            async initialBasket() {
+                const response = await this.getBasket();
+                this.store.state.cart = this.mapBasketToCart(response.data)
+            },
+            // ==== API ACTIONS ====
+            // BASKET
+            async getBasket() {
+                const csrftoken = utils.getCsrfToken();
+                return await axios.get('/api/basket/', {
+                    withCredentials: true,
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+            },
+            async addBasketLine(data) {
+                const csrftoken = utils.getCsrfToken();
+                return await axios.post('/api/basket/add-product/', data, {
+                    withCredentials: true,
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+            },
+            async updateBasketLine(lineUrl, data) {
+                const csrftoken = utils.getCsrfToken();
+                return await axios.patch(utils.httpToHttps(lineUrl), data, {
+                    withCredentials: true,
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+            },
+            async deleteBasketLine(lineUrl) {
+                const csrftoken = utils.getCsrfToken();
+                return await axios.delete(utils.httpToHttps(lineUrl), {
+                    withCredentials: true,
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+            },
+            
+            // PRODUCTS
+            async getProductDetail(productId) {
+                return await axios.get(`/api/products/${productId}/`)  
+            },
+
+            initialState() {
+                this.state.invalid = false;
+                this.state.addingToCart = false;
+                this.state.loadingProduct = false;
+                this.state.loadingProducts = false;
+            },
+
+            mapBasketToCart(basket) {
+                const { lines } = basket;
+
+                return lines.map(line => {
+                    const { product, quantity, attributes } = line;
+                    const options = attributes.reduce((acc, item) => {
+                        return {
+                            ...acc,
+                            [item.option_id]: {
+                                option_id: item.option_id,
+                                value: item.value
+                            }
+                        }
+                    }, {})
+
+                    return {
+                        url: line.url,
+                        price_excl_tax: line.price_excl_tax,
+                        price_currency: line.price_currency,
+                        product,
+                        quantity,
+                        options,
+                    }
+                })
+            }
+        },
+        
+        watch: {
+            'selectedProduct.options': {
+                handler: function() {
+                    let totalPrice = 0;
+
+                    const { product, options } = this.selectedProduct
+    
+                    const productPrice = parseFloat(product?.price || 0);
+
+                    for (const optionId in options) {
+                        const optionKeys = options[optionId].value;
+
+                        const option = this.options.find(option => option.id === parseInt(optionId));
+                        if (!option || !option.option_group?.options) continue;
+
+                        const optionValues = option.option_group.options;
+
+                        if (Array.isArray(optionKeys)) {
+                            totalPrice += optionKeys.reduce((acc, key) => {
+                                const optionValue = optionValues.find(attr => attr.key === key);
+                            
+                                if (optionValue) {
+                                    acc += parseFloat(optionValue.price);
+                                }
+                                return acc;
+                            }, 0);
+                        } else {
+                            const optionValue = optionValues.find(attr => attr.key === optionKeys);
+                            if (optionValue) {
+                                totalPrice += parseFloat(optionValue.price);
+                            }
+                        }
+                    }
+
+                    // Calculate total price including quantity
+                    totalPrice = (productPrice + totalPrice) * this.selectedProduct.quantity;
+
+                    // Format total price to two decimal places
+                    this.totalCurrentLine = totalPrice.toFixed(2);
+                },
+                deep: true
+            }
+        }
+    });
+</script>
+{% endblock %}

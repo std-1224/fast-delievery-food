@@ -1,0 +1,498 @@
+{% load i18n %}
+
+{% block cdn_scripts %}
+
+{% endblock %}
+    
+<style>
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .page-link {
+        display: block;
+        text-decoration: none;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #fff;
+        cursor: pointer;
+    }
+
+    .page-link:hover,
+    .page-link.active {
+        background-color: #007bff;
+        color: #fff;
+        border-color: #007bff;
+    }
+
+    .product-item {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: box-shadow 0.3s ease-in-out;
+    }
+
+    .product-item:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-item-list {
+        display: flex;
+        background: none;
+        border: none;
+        color: #242e30;
+        font-size: 16px;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        padding: 16px;
+        text-align: left;
+        width: calc(100% + 32px);
+        border: 1px solid #efedea;
+        border-radius: 12px;
+        margin-bottom: 16px;
+    }
+
+    .item-content {
+        overflow-wrap: anywhere;
+    }
+
+    .item-image-container {
+        flex-shrink: 0;
+        height: 100px;
+        margin-left: auto;
+        padding-left: 8px;
+    }
+
+    .item-image {
+        aspect-ratio: 4 / 3;
+        border: 1px solid #efedea;
+        border-radius: 8px;
+        box-sizing: content-box;
+        height: 99px;
+        width: 132px;
+        object-fit: cover;
+        padding: 0;
+    }
+
+    .image_container1 {
+        min-height: 150px;
+        overflow: hidden;
+        text-align: center;
+        position: relative;
+    }
+
+
+    /* Modal */
+    .modal-content {
+        height: 100%;
+        max-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .modal-header-btn {
+        display: flex;
+        opacity: .9;
+        position: absolute;
+        right: 16px;
+        top: 22px;
+        z-index: 9000;
+        height: 32px;
+        padding: 0;
+        width: 32px;
+        align-items: center;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        text-size-adjust: 100%;
+        background-color: #fff;
+        border-color: #fff;
+        outline: none;
+    }
+
+    .product-image__container {
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        overflow: hidden;
+        position: relative;
+    }
+    .product-image__container::before {
+        bottom: 8px;
+        box-shadow: inset 0 -4px 6px 0 rgba(27, 35, 36, .08), 0 -2px 12px -2px rgba(27, 35, 36, .32), 0 -3px 6px 0 rgba(27, 35, 36, .24);
+        content: "";
+        height: 100%;
+        position: absolute;
+        width: 100%;
+    }
+    .product-image__container img {
+        aspect-ratio: 4 / 3;
+        width: 100%;
+    }
+
+    .modal-title-container {
+        text-align: center;
+    }
+    .modal-title {
+        font-weight: 800;
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.5;
+        margin-top: 0;
+        padding: 24px 16px 16px;
+    }
+    .modal-price {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5;
+        margin: 0 0 16px;
+    }
+    .modal-description {
+        font-size: 1rem;
+        line-height: 1.5;
+        margin: 8px 24px;
+    }
+
+    .modal-details-info {
+        font-size: .875rem;
+        line-height: 1.43;
+        margin-top: 8px;
+    }
+    .modal-nutrition {
+        color: #3c4c4f;
+        font-size: 12px;
+        font-size: .75rem;
+        line-height: 1.33;
+        line-height: 0;
+        margin-top: 8px;
+    }
+
+    .modal-required-actions {
+        align-items: center;
+        background-color: #fcfcfc;
+        display: flex;
+        flex-direction: column;
+        padding: 32px;
+    }
+
+    .modal-actions {
+        background-color: #fff;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+        bottom: 0;
+        box-shadow: 0 -4px 6px 0 rgba(27, 35, 36, .02), 0 -2px 12px -2px rgba(27, 35, 36, .08), 0 -3px 6px 0 rgba(27, 35, 36, .06);
+        padding: 16px;
+        position: -webkit-sticky;
+        position: sticky;
+        width: 100%;
+        z-index: 5;
+    }
+
+    #productModal [type="radio"]:checked + label,
+    #productModal [type="radio"]:not(:checked) + label
+    {
+        position: relative;
+        padding-left: 28px;
+        cursor: pointer;
+        line-height: 20px;
+        display: inline-block;
+        color: #666;
+    }
+    #productModal  [type="radio"]:checked + label:before,
+    #productModal  [type="radio"]:not(:checked) + label:before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        height: 18px;
+        border: 1px solid #ddd;
+        border-radius: 100%;
+        background: #fff;
+    }
+    #productModal [type="radio"]:checked + label:after,
+    #productModal [type="radio"]:not(:checked) + label:after {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: #007bff;
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        border-radius: 100%;
+        -webkit-transition: all 0.2s ease;
+        transition: all 0.2s ease;
+    }
+    #productModal [type="radio"]:not(:checked) + label:after {
+        opacity: 0;
+        -webkit-transform: scale(0);
+        transform: scale(0);
+    }
+    #productModal [type="radio"]:checked + label:after {
+        opacity: 1;
+        -webkit-transform: scale(1);
+        transform: scale(1);
+    }
+</style>
+
+<body>
+    {% if s_config.home_page_layout == "Slider" %}
+    <div v-cloak id="app" class="w-100">
+        <div class="row text-center m-auto w-100">
+            <article v-for="p in products" class="product-item-list" onclick="selectedProduct = p" data-toggle="modal" data-target="#productModal">
+                <div class="item-content">
+                    <h3 class="font-weight-bold" style="font-size: 1.25rem;">[[ p.title ]]
+                    </h3>
+                    <p class="card-title mt-2" v-html="p.description">
+                    </p>
+                    <p class="item-nutrition-info" style="font-size: 0.875rem; margin-bottom: 8px;">
+                        1371 kJ/328 kcal
+                    </p>
+                    <p class="card-text font-weight-bold" v-if="p.price !== null">
+                        {{ s_config.currency }} [[ p.price ]]
+                    </p>
+                </div>
+                <div class="item-image-container">
+                    <img :src="p.original" class="card-img-top img-thumbnail item-image" alt="Product Image">
+                </div>
+            </article>
+        </div>
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                        <a class="page-link" @click.prevent="fetchProducts(currentPage - 1)" href="#"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li v-for="pageNumber in Array.from({ length: totalPages }, (_, i) => i + 1)" :key="pageNumber"
+                        class="page-item" :class="{ 'active': pageNumber === currentPage }">
+                        <a class="page-link" @click.prevent="fetchProducts(pageNumber)" href="#">[[ pageNumber ]]</a>
+                    </li>
+                    <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                        <a class="page-link" @click.prevent="fetchProducts(currentPage + 1)" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content rounded-lg">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="productModalLabel" v-if="selectedProduct">[[ selectedProduct.title
+                            ]]</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <img v-if="selectedProduct" :src="selectedProduct.original" alt="Product Image"
+                            style="max-width: 30%; margin-bottom: 20px;">
+                        <div class="d-flex align-items-center mb-2" style="font-size: 18px;">
+                            <span class="mr-2" v-if="selectedProduct">Price: </span>
+                            <span class="price-tag text-success font-weight-bold"
+                                v-if="selectedProduct && selectedProduct.price !== null">[[ selectedProduct.price
+                                ]]</span>
+                            <span class="price-tag text-success font-weight-bold" v-else>0.00</span>
+                        </div>
+                        <div class="form-group" v-for="option in options" :key="option.id">
+                            <label>[[ option.name ]]:</label>
+                            <template v-if="option.type === 'text'">
+                                <input type="text" class="form-control" v-model="selectedProduct.option[option.id]" />
+                            </template>
+                            <template v-else-if="option.type === 'select'">
+                                <select class="form-control" v-model="selectedProduct.option[option.id]">
+                                    <option v-for="attr in option.option_attr" :key="attr.id" :value="attr.id">
+                                        [[ attr.option ]]
+                                    </option>
+                                </select>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <p class="mr-auto">Total: </p>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">ADD TO CART</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div v-cloak id="app" class="w-100">
+        <div class="row text-center m-auto w-100">
+            <button v-for="p in products" class="product-item-list" @click="selectProduct(p)" >
+                <div class="item-content">
+                    <h3 class="font-weight-bold" style="font-size: 1.25rem;">[[ p.title ]]
+                    </h3>
+                    <p class="card-title mt-2">
+                        [[ p.description ]]
+                    </p>
+                    <p class="item-nutrition-info" style="font-size: 0.875rem; margin-bottom: 8px;">
+                        from 1371 kJ/328 kcal
+                    </p>
+                    <p class="card-text font-weight-bold" v-if="p.price !== null">
+                        {{ s_config.currency }}[[ p.price ]]
+                    </p>
+                </div>
+                <div class="item-image-container">
+                    <img :src="p.original" class="card-img-top img-thumbnail item-image" alt="Product Image">
+                </div>
+            </button>
+        </div>
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item" :class="{ 'disabled': currentPage === 1 }">
+                        <a class="page-link" @click.prevent="fetchProducts(currentPage - 1)" href="#"
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li v-for="pageNumber in Array.from({ length: totalPages }, (_, i) => i + 1)" :key="pageNumber"
+                        class="page-item" :class="{ 'active': pageNumber === currentPage }">
+                        <a class="page-link" @click.prevent="fetchProducts(pageNumber)" href="#">[[ pageNumber ]]</a>
+                    </li>
+                    <li class="page-item" :class="{ 'disabled': currentPage === totalPages }">
+                        <a class="page-link" @click.prevent="fetchProducts(currentPage + 1)" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="modal fade" id="productModal" tabindex="-1" role="dialog" aria-labelledby="productModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="overflow-auto">
+                        <header>
+                            <button
+                                type="button"
+                                data-dismiss="modal"
+                                aria-label="Close"
+                                class="btn modal-header-btn"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 14 14"
+                                >
+                                    <path
+                                        d="M10.8676 2.20496L7.0001 6.07248L3.13258 2.20496L2.20508 3.13246L6.0726 6.99998L2.20508 10.8675L3.13258 11.795L7.0001 7.92748L10.8676 11.795L11.7951 10.8675L7.92761 6.99998L11.7951 3.13246L10.8676 2.20496Z"
+                                    ></path>
+                                </svg>
+                            </button>
+                        </header>
+
+                        <div class="product-image__container">
+                            <img v-if="selectedProduct && selectedProduct.product" :src="selectedProduct.product.original" alt="Product Image">
+                        </div>
+                        <div class="modal-title-container">
+                            <h1 v-if="selectedProduct && selectedProduct.product" class="modal-title">
+                                <span>
+                                    [[ selectedProduct.product.title ]]
+                                </span>
+                            </h1>
+                        </div>
+                        <p class="modal-price text-center">
+                            {{ s_config.currency }}
+                            <span
+                            v-if="selectedProduct && selectedProduct.product">[[ selectedProduct.product.price
+                            ]]</span>
+                            <span v-else>0.00</span>
+                        </p>
+                        <p class="modal-description text-center">
+                            Take a double shot of Arabica bean espresso and mix it with steamed organic, semi-skimmed milk from UK dairies, steamed to perfection.
+                        </p>
+                        <div>
+                            <p class="modal-details-info text-center">
+                                from 2948 kJ/703 kcal
+                            </p>
+                            <p class="modal-nutrition text-center">
+                                Adults need around 2000 kcal a day. Equal to 8400 kJ.
+                            </p>
+                        </div>
+
+                        <div>
+                            <div v-for="option in options" :key="option.id">
+                                <fieldset>
+                                    <legend class="w-100 p-3 bg-light sticky-top" style="z-index: 3;">
+                                        <span class="h6 d-flex justify-content-between align-items-center mb-0">
+                                            <span class="w-100 font-weight-bold">[[ option.name ]]</span>
+                                            <span class="badge badge-pill badge-dark">Optional</span>
+                                        </span>
+                                    </legend>
+                                    <div>
+                                        <div>
+                                            <!-- TEXT -->
+                                            <template v-if="option.type === 'text'">
+                                                <input type="text" class="form-control" v-model="selectedProduct.option[option.id]" />
+                                            </template>
+                                            <!-- SELECT (RADIO) -->
+                                            <template v-else-if="option.type === 'select'">
+                                                    <div v-for="attr in option.option_attr" :key="attr.id" :value="attr.id" class="p-3 border-bottom">
+                                                        <input hidden :id="attr.id" type="radio" :value="attr.id" :name=option.name v-model="selectedProduct.options[option.id]" >
+                                                        <label :for="attr.id" class="w-100 mb-0">
+                                                            <span>
+                                                                <span class="d-flex justify-content-between">
+                                                                    <span class="w-100 d-flex flex-column">   
+                                                                        <span class="font-weight-bold">
+                                                                            [[ attr.option ]]
+                                                                        </span>
+                                                                        <span v-if="attr.help_text">
+                                                                            [[ attr.help_text ]]
+                                                                        </span>
+                                                                    </span>
+                                                                    <span v-if="attr.price && attr.price > 0" class="text-success">+{{ s_config.currency }}[[ attr.price ]]</span>
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                
+                            </div>
+                        </div>
+
+                        <div class="modal-required-actions">
+                            <button class="btn btn-primary btn-lg rounded-circle w-20 h-20">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14 14" class="c-itemSelector-requiredActions-icon c-pieIcon c-pieIcon--ArrowLongUpSmall"></svg>
+                                    <path d="M7.65625 13.125V2.93126L10.9463 6.22126L11.8738 5.29376L7.77 1.19876C7.66915 1.09717 7.54919 1.01654 7.41704 0.961522C7.28488 0.906501 7.14315 0.878174 7 0.878174C6.85685 0.878174 6.71512 0.906501 6.58296 0.961522C6.45081 1.01654 6.33085 1.09717 6.23 1.19876L2.12625 5.29376L3.05375 6.22126L6.34375 2.93126V13.125H7.65625Z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn btn-outline-primary border-0">
+                                See what you missed
+                            </button>
+                            <p>
+                                Make sure you pick all your options for this item. You’re almost there
+                            </p>
+                        </div>
+
+                        <div class="modal-actions">
+                            <div v-if="selectedProduct" class="d-flex justify-content-center align-items-center mb-4">
+                                <button type="button" :disabled="selectedProduct.quantity <= 1" @click="selectedProduct.quantity--" class="btn btn-outline-primary border-0">
+                                    <span aria-hidden="true">-</span>
+                                </button>
+                                <p class="mb-0 mx-4 font-weight-bold h5">[[ selectedProduct.quantity ]]</p>
+                                <button type="button" @click="selectedProduct.quantity++" class="btn btn-outline-primary border-0">
+                                    <span aria-hidden="true">+</span>
+                                </button>
+                            </div>
+                            <button type="button" @click="addProductToCart" class="btn btn-primary btn-lg w-100 d-flex justify-content-between rounded-pill">
+                                <span>Add to order</span>
+                                <span data-test-id="total-price" class="notranslate">{{ s_config.currency }}[[totalCurrentLine]]</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</body>

@@ -1,0 +1,19 @@
+{% extends "oscar/base.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+
+    <meta name="robots" content="NONE,NOARCHIVE">
+{% endblock %}
+
+{% block cookie_consent %}
+    {# By default there is no cookie consent in the dashboard #}
+{% endblock %}
+
+{% block footer %}
+    {# By default there is no footer in the dashboard #}
+{% endblock %}
+
+{% block tracking %}
+    {# By default there is no analytics tracking in the dashboard #}
+{% endblock %}

@@ -1,0 +1,51 @@
+{% load currency_filters %}
+{% load i18n %}
+{% load system_tags %}
+{% get_system as s_config %}
+{% load static %}
+<div class="row">
+    <div style="padding-right:5px;padding-top: 5px;">
+       <img src="{%static '/media/anh.jpg' %}">
+    </div>
+    <div>
+    <p class="no-margin">
+        <strong>Call us: </strong>{{s_config.phone}}
+    </p>
+    <p class="no-margin">
+        <a class="no-underline" href="https://mail.google.com/mail/?view=cm&fs=1&to={{ s_config.email }}">{{s_config.email}}</a>
+    </p>
+    </div>
+</div>
+<style>
+    .no-underline{
+        text-decoration : none!important
+    }
+    .no-margin{
+        margin:0!important
+    }
+    .row{
+        display:flex;
+    }
+    .column{
+        flex :1;
+    }
+</style>
+
+<!--<div class="basket-mini col-sm-5 text-right d-none d-md-block">-->
+<!--    <strong>{% trans "Basket total:" %}</strong>-->
+<!--    {% if request.basket.is_tax_known %}-->
+<!--        {{ request.basket.total_incl_tax|currency:request.basket.currency }}-->
+<!--    {% else %}-->
+<!--        {{ request.basket.total_excl_tax|currency:request.basket.currency }}-->
+<!--    {% endif %}-->
+
+<!--    <div class="btn-group">-->
+<!--      <button type="button" class="{% block mini_basket_btn_classes %}btn btn-outline-secondary{% endblock %}" onclick="window.location.href='{% url 'basket:summary' %}';">{% trans "View basket" %}</button>-->
+<!--      <button type="button" class="{% block mini_basket_toggle_classes %}btn btn-outline-secondary dropdown-toggle dropdown-toggle-split{% endblock %}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">-->
+<!--        <span class="sr-only">Toggle Dropdown</span>-->
+<!--      </button>-->
+<!--      <div class="{% block mini_basket_dropdown_classes %}dropdown-menu dropdown-menu-right{% endblock %}">-->
+<!--        {% include "oscar/basket/partials/basket_quick.html" %}-->
+<!--      </div>-->
+<!--    </div>-->
+<!--</div>-->

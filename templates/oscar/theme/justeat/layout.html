@@ -1,0 +1,48 @@
+{% extends "oscar/layout.html" %}
+
+{% comment %}
+Keep the same header and footer as the standard layout template but override the
+main content area to split it into a sidebar and a content block
+{% endcomment %}
+{% block content_wrapper %}
+{% if s_config.home_page_layout == "Slider" %}
+    {% include "oscar/partials/slider.html" %}
+{% endif %}
+
+{% block nav_header %}
+{% endblock %}
+
+
+<div class="{% block content_wrapper_classes %} page{% endblock %} p-0" >       
+    {% include "oscar/partials/alert_messages.html" %}
+    {% include "oscar/theme/justeat/navbar.html" %}
+    <div class="d-flex">
+        <!-- This is main content area -->
+        <section class="flex-1 w-100 border-right px-0">
+            {% include "oscar/theme/justeat/header.html" %}
+            <div class="row">   
+                {% if s_config.home_page_layout == "BackgroundTop" %}     {% endif %}
+                {% block pre_content %}{% endblock %}
+            
+                <aside class="sidebar col-lg-3 d-none d-lg-block">
+                    {% block column_left %}
+                        {% include "oscar/theme/justeat/partials/categrory_list.html" %}
+                    {% endblock %}
+                    {% block column_left_extra %}{% endblock %}
+                </aside>
+        
+                
+                <main class="col-md-12 col-lg-8">
+                    {% block main %}{% endblock %}
+                </main>
+            </div>
+        </section>
+
+        <!-- This is sidebar area -->
+        <section>
+            {% block sidebar %}{% endblock %}
+        </section>
+    </div>
+</div><!-- /container -->
+{% endblock %}
+
