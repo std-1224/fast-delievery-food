@@ -147,11 +147,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const apiUrl = `/api/postcode-autocomplete/?postcode=${encodeURIComponent(postcode)}`;
 
                 try {
-                    const response = await fetch(apiUrl);
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok ' + response.statusText);
-                    }
-                    const data = await response.json();
+                    const response = await axios.get(apiUrl);
+                    const data = response.data;
 
                     // Clear previous results
                     resultsContainer.innerHTML = '';
@@ -169,19 +166,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 // Populate the input field and potentially other form fields with the selected location data
                                 // When a user selects a location, populate the postcode field with the actual postcode
                                 postcodeInput.value = location.address; // Populate with full address for display initially
-
-                                // You would typically want to populate separate fields for address components
-                                // You'll need to identify the correct IDs or selectors for your address fields
-                                // Example (adjust selectors based on your form's HTML):n
-                                const line1Field = document.querySelector('#id_line1'); 
-                                if (line1Field) line1Field.value = location.line1;
-                                const line4Field = document.querySelector('#id_line4'); 
-                                if (line4Field) line4Field.value = location.line4;
-                                const postcodeField = document.querySelector('#id_postcode'); 
-                                if (postcodeField) postcodeField.value = location.postcode; // Use the specific postcode field from the API
-                                const countryField = document.querySelector('#id_country'); 
-                                // You might need to map country names to country codes if your country field uses codes
-                                // if (countryField) countryField.value = location.country; 
 
                                 resultsContainer.style.display = 'none'; // Hide results after selection
                                 resultsContainer.innerHTML = ''; // Also clear the list
