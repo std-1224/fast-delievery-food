@@ -20,8 +20,6 @@ from settings import PAYMENT_METHOD_CASH, PAYMENT_METHOD_CARD, STRIPE_PUBLISH_KE
     PAYMENT_EVENT_SETTLED, STRIPE_EMAIL
 from .facade import StripeFacade
 from .forms import StripeTokenForm, GuestCheckoutForm
-from django.db.models import Q
-from rest_framework.views import APIView, Response
 
 Repository = get_class("shipping.repository", "Repository")
 CheckoutSessionMixin = get_class("checkout.session", "CheckoutSessionMixin")
@@ -315,17 +313,6 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
 
     def get_success_url(self):
         return reverse('checkout:payment-details')
-
-
-class PostcodeSearchView(APIView):
-    def get(self, request):
-        query = request.GET.get('q', '')
-        if not query:
-            return Response([])
-        postcodes = Postcode.objects.filter(Q(code__icontains=query) | Q(street__icontains=query))
-        serializer = PostcodeSerializer(postcodes, many=True)
-        return Response(serializer.data)
-
 
 class PaymentMethodView(CheckoutSessionMixin, generic.TemplateView):
     template_name = 'oscar/checkout/payment_method.html'
