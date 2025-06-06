@@ -1,5 +1,71 @@
 {% load widget_tweaks %}
 
+<style>
+/* Existing CSS for input styling */
+.postcode-input-container {
+    position: relative;
+}
+
+.postcode-input-container .form-control.product-option {
+    border: 1px solid #ccc;
+    padding-right: 30px;
+    max-width: 100% !important;
+}
+
+.postcode-search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+    font-size: 16px;
+}
+
+.postcode-input-container .form-control.product-option:focus {
+    border-color: #a0a0a0;
+    box-shadow: none;
+}
+
+.postcode-input-container .form-control.product-option:focus + .postcode-search-icon {
+    color: #555;
+}
+
+/* CSS for search results */
+.postcode-search-results {
+    border: 1px solid #ccc;
+    border-top: none; /* No top border to connect visually with the input */
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    max-height: 200px; /* Limit height and add scroll if many results */
+    overflow-y: auto;
+    background-color: #fff;
+    position: absolute; /* Position results relative to the form field container */
+    width: 95%; /* Make results width match the input */
+    z-index: 100; /* Ensure results appear above other content */
+    list-style: none; /* Remove default list styling */
+    padding: 0;
+    margin: 0;
+    display: none; /* Hide results by default */
+}
+
+.postcode-search-results li {
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.postcode-search-results li:hover {
+    background-color: #f0f0f0; /* Highlight on hover */
+}
+
+.postcode-search-results li i {
+    margin-right: 10px; /* Space between icon and text */
+    color: #888; /* Icon color */
+}
+</style>
+
 {% if field.is_hidden %}
     {{ field }}
 {% else %}
@@ -29,6 +95,15 @@
                             </label>
                         {% elif field.widget_type == 'radioselect' or field.widget_type == 'checkboxselectmultiple' %}
                             {% render_field field class+="position-static product-option controls" %}
+                        {% elif field.name == 'postcode' %}
+                            <div class="postcode-input-container">
+                                {% render_field field class+="form-control product-option" %}
+                                <i class="fas fa-search postcode-search-icon"></i>
+                            </div>
+                            {# Container for search results #}
+                            <ul class="postcode-search-results">
+                                {# Results will be loaded here by JavaScript #}
+                            </ul>
                         {% else %}
                             {% render_field field class+="form-control product-option" %}
                         {% endif %}
@@ -53,3 +128,100 @@
         </div>
     {% endblock %}
 {% endif %}
+
+<script>
+// JavaScript for postcode search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const postcodeInputContainer = document.querySelector('.postcode-input-container');
+    if (postcodeInputContainer) {
+        const postcodeInput = postcodeInputContainer.querySelector('input[type="text"]');
+        const searchIcon = postcodeInputContainer.querySelector('.postcode-search-icon');
+        const resultsContainer = document.querySelector('.postcode-search-results');
+
+        // Function to perform the search
+        const performSearch = async () => {
+            const postcode = postcodeInput.value;
+            // Only search if postcode has at least 3 characters (adjust as needed)
+            if (postcode.length > 2) {
+                // Use the URL of the new backend endpoint
+                const apiUrl = `/api/postcode-autocomplete/?postcode=${encodeURIComponent(postcode)}`;
+
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    const data = await response.json();
+
+                    // Clear previous results
+                    resultsContainer.innerHTML = '';
+
+                    if (data && data.length > 0) {
+                        // Display new results
+                        data.forEach(location => {
+                            const li = document.createElement('li');
+                            // Assuming your API returns objects with 'line1', 'line4', 'postcode', 'country', and 'full_address'
+                            // Display the full address or a formatted version in the list
+                            // Use the full_address for displaying in the search results list
+                            li.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${location.address}`;
+
+                            li.addEventListener('click', () => {
+                                // Populate the input field and potentially other form fields with the selected location data
+                                // When a user selects a location, populate the postcode field with the actual postcode
+                                postcodeInput.value = location.address; // Populate with full address for display initially
+
+                                // You would typically want to populate separate fields for address components
+                                // You'll need to identify the correct IDs or selectors for your address fields
+                                // Example (adjust selectors based on your form's HTML):n
+                                const line1Field = document.querySelector('#id_line1'); 
+                                if (line1Field) line1Field.value = location.line1;
+                                const line4Field = document.querySelector('#id_line4'); 
+                                if (line4Field) line4Field.value = location.line4;
+                                const postcodeField = document.querySelector('#id_postcode'); 
+                                if (postcodeField) postcodeField.value = location.postcode; // Use the specific postcode field from the API
+                                const countryField = document.querySelector('#id_country'); 
+                                // You might need to map country names to country codes if your country field uses codes
+                                // if (countryField) countryField.value = location.country; 
+
+                                resultsContainer.style.display = 'none'; // Hide results after selection
+                                resultsContainer.innerHTML = ''; // Also clear the list
+                            });
+                            resultsContainer.appendChild(li);
+                        });
+                        resultsContainer.style.display = 'block'; // Show the results container
+                    } else {
+                        // No results found
+                        resultsContainer.innerHTML = '<li>No locations found.</li>';
+                        resultsContainer.style.display = 'block'; // Still show the container to indicate no results
+                    }
+                } catch (error) {
+                    console.error('Error fetching postcode locations:', error);
+                    resultsContainer.innerHTML = '<li>Error searching for locations.</li>';
+                    resultsContainer.style.display = 'block'; // Still show the container to indicate error
+                }
+            } else {
+                // Clear results if input is too short or empty
+                resultsContainer.innerHTML = '';
+                resultsContainer.style.display = 'none'; // Hide the results container
+            }
+        };
+        // Listen for click on the search icon
+        searchIcon.addEventListener('click', performSearch);
+
+        // Hide results when the input loses focus, with a slight delay
+        postcodeInput.addEventListener('blur', () => {
+             setTimeout(() => {
+                 // Check if the element gaining focus is not within the results container
+                 if (!resultsContainer.contains(document.activeElement)) {
+                     resultsContainer.style.display = 'none';
+                 }
+             }, 100); // Small delay to allow clicks on results before hiding
+         });
+
+        // Prevent the results container from disappearing immediately when clicking inside it
+        resultsContainer.addEventListener('mousedown', (event) => {
+            event.preventDefault(); // Prevent input blur when clicking results
+        });
+    }
+});
+</script>
