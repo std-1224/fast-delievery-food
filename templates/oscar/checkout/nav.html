@@ -3,7 +3,7 @@
 <nav class="navbar navbar-static-top nav-checkout navbar-expand-md navbar-dark bg-dark">
     <ul class="navbar-nav mr-auto">
     {% spaceless %}
-        <li class="nav-item step1 {% if step == 1 %}active{% else %}{% if step == 2 %}previous{% else %}{% if step > 1 %}visited{% else %}disabled{% endif %}{% endif %}{% endif %} ">
+        <li class="nav-item step1 {% if step == 1 %}active{% else %}{% if step == 2 %}previous{% else %}{% if step > 1 %}visited{% else %}disabled{% endif %}{% endif %}{% endif %} delivery-step" style="display: none;">
             {% if step == 2 or step == 3 or step == 4 %}
                 <a href="{% url 'checkout:shipping-address' %}" class="nav-link">
                     <i class="fas fa-chevron-right"></i>
@@ -18,47 +18,54 @@
             {% endif %}
         </li>
 
-        <li class="nav-item step2 {% if step == 2 %}active{% else %}{% if step == 3 %}previous{% else %}{% if step > 2 %}visited{% else %}disabled{% endif %}{% endif %}{% endif %} ">
-            {% if step == 3 or step == 4 %}
-                <a href="{% url 'checkout:shipping-method' %}" class="nav-link">
-                    <i class="fas fa-chevron-right"></i>
-                    <span>
-                        {% trans "2. Dispatch method" %}
-                    </span>
-                </a>
-            {% else %}
-                <span class="navbar-text">
-                    {%  trans "2. Dispatch method" %}
-                </span>
-            {% endif %}
-        </li>
-
         <li class="nav-item step4 {% if step == 4 %}active{% else %}disabled{% endif %} ">
             {% if step == 3 %}
             <a href="{% url 'checkout:preview' %}" class="nav-link">
                 <i class="fas fa-chevron-right"></i>
-                <span>
-                    {% trans "3. Preview" %}
+                <span class="preview-step">
+                    {% trans "2. Preview" %}
                 </span>
             </a>
             {%else%}
-                <span class="navbar-text">
-                    {% trans "3. Preview" %}
+                <span class="navbar-text preview-step">
+                    {% trans "2. Preview" %}
                 </span>
             {%endif%}
         </li>
 
         <li class="nav-item step3 {% if step == 3 %}active{% else %}{% if step == 4 %}previous{% else %}{% if step > 3 %}visited{% else %}disabled{% endif %}{% endif %}{% endif %} ">
-            <span class="navbar-text">
-                {%  trans "4. Payment" %}
+            <span class="navbar-text payment-step">
+                {% trans "3. Payment" %}
             </span>
         </li>
 
         <li class="nav-item step5 {% if step == 5 %}active{% else %}disabled{% endif %} ">
-            <span class="navbar-text">
-                {% trans "5. Confirmation" %}
+            <span class="navbar-text confirmation-step">
+                {% trans "4. Confirmation" %}
             </span>
         </li>
     {% endspaceless %}
   </ul><!-- /navbar-inner -->
 </nav><!-- /navbar -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deliveryType = localStorage.getItem('deliveryType');
+    const deliveryStep = document.querySelector('.delivery-step');
+    const previewStep = document.querySelector('.preview-step');
+    const paymentStep = document.querySelector('.payment-step');
+    const confirmationStep = document.querySelector('.confirmation-step');
+
+    if (deliveryType === 'delivery') {
+        deliveryStep.style.display = 'block';
+        previewStep.textContent = '2. Preview';
+        paymentStep.textContent = '3. Payment';
+        confirmationStep.textContent = '4. Confirmation';
+    } else {
+        deliveryStep.style.display = 'none';
+        previewStep.textContent = '1. Preview';
+        paymentStep.textContent = '2. Payment';
+        confirmationStep.textContent = '3. Confirmation';
+    }
+});
+</script>

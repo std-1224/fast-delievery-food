@@ -70,3 +70,9 @@ class GuestCheckoutForm(forms.Form):
     first_name = forms.CharField(label=_("First name"), max_length=150, required=True)
     last_name = forms.CharField(label=_("Last name"), max_length=150, required=True)
     email = forms.EmailField(label=_("Email address"), required=True)
+
+    def is_guest_checkout(self):
+        return True
+
+    def get_user(self):
+        return None

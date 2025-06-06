@@ -11,7 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormMixin
 from oscar.apps.checkout import signals
 from oscar.apps.checkout.views import (PaymentDetailsView as CorePaymentDetailsView,
-                                       IndexView as CoreIndexView)
+                                       IndexView as CoreIndexView,
+                                       ShippingAddressView as CoreShippingAddressView)
 from oscar.apps.shipping.methods import NoShippingRequired
 from oscar.core.loading import get_model, get_class, get_classes
 
@@ -19,6 +20,8 @@ from settings import PAYMENT_METHOD_CASH, PAYMENT_METHOD_CARD, STRIPE_PUBLISH_KE
     PAYMENT_EVENT_SETTLED, STRIPE_EMAIL
 from .facade import StripeFacade
 from .forms import StripeTokenForm, GuestCheckoutForm
+from django.db.models import Q
+from rest_framework.views import APIView, Response
 
 Repository = get_class("shipping.repository", "Repository")
 CheckoutSessionMixin = get_class("checkout.session", "CheckoutSessionMixin")
@@ -35,6 +38,9 @@ Source = get_model('payment', 'Source')
 class IndexView(CoreIndexView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Get delivery type from session
+        delivery_type = self.request.session.get('delivery_type', 'delivery')
+        context['delivery_type'] = delivery_type
         context['guest_checkout_form'] = GuestCheckoutForm(**self.get_form_kwargs())
         return context
 
@@ -56,19 +62,9 @@ class IndexView(CoreIndexView):
 
     def form_valid(self, form):
         self.checkout_session.set_guest_email("")
-        if isinstance(form, GuestCheckoutForm):
-            phone_number = form.cleaned_data["phone_number"]
-            first_name = form.cleaned_data["first_name"]
-            email = form.cleaned_data["email"]
-            last_name = form.cleaned_data["last_name"]
-            self.checkout_session.set_guest_info(first_name, last_name, phone_number)
-            self.checkout_session.set_guest_email(email)
-            signals.start_checkout.send_robust(
-                sender=self, request=self.request, email=email
-            )
 
-        elif form.is_new_account_checkout():
-            email = form.cleaned_data["username"]
+        if form.is_guest_checkout():
+            email = form.cleaned_data["email"]
             self.checkout_session.set_guest_email(email)
 
             # We raise a signal to indicate that the user has entered the
@@ -95,18 +91,15 @@ class IndexView(CoreIndexView):
             # checkout process.
             signals.start_checkout.send_robust(sender=self, request=self.request)
 
-        # --- Start: Conditional redirect based on order type ---
-        # You need to replace the placeholder condition below with your actual logic
-        # to determine if the order is for delivery or collection.
-        is_delivery_order = False # Placeholder: Replace with actual check (e.g., based on basket or session)
+        # Get delivery type from session
+        delivery_type = self.request.session.get('delivery_type', 'delivery')
 
-        if is_delivery_order:
-            # Redirect to shipping address for delivery orders
+        if delivery_type == 'delivery':
+            # For delivery orders, go to shipping address first
             self.success_url = reverse("checkout:shipping-address")
         else:
-            # Redirect directly to preview for collection orders
+            # For collection orders, skip shipping address and go directly to preview
             self.success_url = reverse("checkout:preview")
-        # --- End: Conditional redirect based on order type ---
 
         return redirect(self.get_success_url())
 
@@ -134,17 +127,18 @@ class PaymentDetailsView(CorePaymentDetailsView):
         if request.POST.get("action", "") == "place_order":
             return super().post(request, *args, **kwargs)
         return super().render_payment_details(request, *args, **kwargs)
-        
+    
 
     def get_context_data(self, **kwargs):
-        ctx = super(PaymentDetailsView, self).get_context_data(**kwargs)
+        ctx = super().get_context_data(**kwargs)
+        ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        
         if self.preview:
             ctx['stripe_token_form'] = StripeTokenForm(self.request.POST)
             ctx['order_total_incl_tax_cents'] = (
                     ctx['order_total'].incl_tax * 100
             ).to_integral_value()
             ctx['payment_method'] = self.request.POST.get('payment_method')
-            print(ctx['payment_method'])
         else:
             ctx['stripe_publish_key'] = STRIPE_PUBLISH_KEY
 
@@ -287,3 +281,79 @@ class ShippingMethodView(CheckoutSessionMixin, generic.FormView):
 
     def get_success_response(self):
         return redirect(self.get_success_url())
+
+
+class ShippingAddressView(CoreShippingAddressView):
+    def get(self, request, *args, **kwargs):
+        # Check if this is a collection order
+        if request.session.get('delivery_type') == 'collection':
+            return redirect('checkout:preview')
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # Check if this is a collection order
+        if request.session.get('delivery_type') == 'collection':
+            return redirect('checkout:preview')
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse('checkout:preview')
+
+
+class PreviewView(CheckoutSessionMixin, generic.TemplateView):
+    template_name = 'oscar/checkout/preview.html'
+    pre_conditions = [
+        'check_basket_is_not_empty',
+        'check_basket_is_valid',
+        'check_user_email_is_captured',
+    ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        return ctx
+
+    def get_success_url(self):
+        return reverse('checkout:payment-details')
+
+
+class PostcodeSearchView(APIView):
+    def get(self, request):
+        query = request.GET.get('q', '')
+        if not query:
+            return Response([])
+        postcodes = Postcode.objects.filter(Q(code__icontains=query) | Q(street__icontains=query))
+        serializer = PostcodeSerializer(postcodes, many=True)
+        return Response(serializer.data)
+
+
+class PaymentMethodView(CheckoutSessionMixin, generic.TemplateView):
+    template_name = 'oscar/checkout/payment_method.html'
+    pre_conditions = [
+        'check_basket_is_not_empty',
+        'check_basket_is_valid',
+        'check_user_email_is_captured',
+    ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        return ctx
+
+    def get_success_url(self):
+        return reverse('checkout:payment-details')
+
+
+class ThankYouView(CheckoutSessionMixin, generic.TemplateView):
+    template_name = 'oscar/checkout/thank_you.html'
+    pre_conditions = [
+        'check_basket_is_not_empty',
+        'check_basket_is_valid',
+        'check_user_email_is_captured',
+    ]
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['order_number'] = self.checkout_session.get_order_number()
+        ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        return ctx

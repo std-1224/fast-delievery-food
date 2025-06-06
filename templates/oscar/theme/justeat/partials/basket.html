@@ -1,3 +1,4 @@
+
 <div class="content-wrapper bg-white">
   <div class="sidebar-title d-flex justify-content-center px-3 pt-4">
     <h3 class="font-weight-bold text-center h4">Basket</h3>
@@ -11,7 +12,11 @@
         type="button"
         class="btn rounded-pill d-flex flex-column align-items-center"
         :class="store.state.deliveryType === 'delivery' ? 'btn-light border border-primary font-weight-bold' : 'btn-light text-muted'"
-        @click="store.state.deliveryType = 'delivery'"
+        @click="() => {
+            store.state.deliveryType = 'delivery';
+            localStorage.setItem('deliveryType', 'delivery')
+            console.log('Delivery Type changed to:', store.state.deliveryType);
+        }"
         style="min-width: 150px;"
       >
         <span>
@@ -24,7 +29,11 @@
         type="button"
         class="btn rounded-pill d-flex flex-column align-items-center"
         :class="store.state.deliveryType === 'collection' ? 'btn-light border border-warning font-weight-bold text-warning' : 'btn-light text-muted'"
-        @click="store.state.deliveryType = 'collection'"
+        @click="() => {
+            store.state.deliveryType = 'collection';
+            localStorage.setItem('deliveryType', 'collection')
+            console.log('Delivery Type changed to:', store.state.deliveryType);
+        }"
         style="min-width: 150px;"
       >
         <span>
