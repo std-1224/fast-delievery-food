@@ -7,7 +7,7 @@ from oscar.apps.checkout.forms import GatewayForm as BaseGatewayForm, ShippingAd
 class ShippingAddressForm(BaseShippingAddressForm):
     postcode = forms.CharField(
         label=_("Postcode"),
-        max_length=64,
+        max_length=128,
         required=True,
         help_text=_("Please enter your postcode.")
     )

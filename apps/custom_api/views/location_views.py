@@ -12,7 +12,7 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 # Replace the mock implementation with actual search logic using Nominatim
 def search_locations_by_postcode(postcode_query):
     suggestions = []
-    geolocator = Nominatim(user_agent="oscar-checkout-app") # Use an appropriate user agent
+    geolocator = Nominatim(user_agent="address_lookup") # Use an appropriate user agent
 
     if postcode_query:
         try:

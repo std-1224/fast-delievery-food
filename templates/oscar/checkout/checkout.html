@@ -20,7 +20,7 @@
         </div>
     {% endif %}
 
-    <div class="row shipping-payment">
+    <div class="row shipping-payment ">
         {% block shipping_address %}
             <div class="col-sm-6">
                 <div class="sub-header">
@@ -58,25 +58,6 @@
                             <h4>{% trans "Instructions" %}</h4>
                             <p>{{ shipping_address.notes|linebreaks }}</p>
                         {% endif %}
-                    </div>
-                {% endif %}
-
-                {% if shipping_method %}
-                    <div class="card card-body bg-light card card-body bg-light-info">
-                        <h3>
-                          {% trans "Dispatch method" %}
-                          {% block shipping_method_actions %}
-                            <a href="{% url 'checkout:shipping-method' %}" class="float-right">
-                                {% trans "Change" %}
-                            </a>
-                          {% endblock %}
-                        </h3>
-                        <p>{{ shipping_method.name }}
-                            {% if shipping_method.description %}
-                                - {{ shipping_method.description|safe }}
-                            {% endif %}
-                        </p>
-
                     </div>
                 {% endif %}
             </div>
@@ -195,3 +176,5 @@
     {% endblock place_order %}
 
 {% endblock content %}
+
+    

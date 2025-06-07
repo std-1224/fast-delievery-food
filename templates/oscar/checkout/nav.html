@@ -56,11 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentStep = document.querySelector('.payment-step');
     const confirmationStep = document.querySelector('.confirmation-step');
 
-    if (deliveryType === 'delivery') {
+
+    if (deliveryType === null || deliveryType === 'delivery') {
         deliveryStep.style.display = 'block';
         previewStep.textContent = '2. Preview';
         paymentStep.textContent = '3. Payment';
         confirmationStep.textContent = '4. Confirmation';
+       
     } else {
         deliveryStep.style.display = 'none';
         previewStep.textContent = '1. Preview';

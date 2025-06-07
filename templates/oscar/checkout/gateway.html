@@ -166,10 +166,5 @@
     $('#toggle-login').on('click', function(e) {
         e.preventDefault();
         $('#login-section').toggleClass('active');
-        {% comment %} $(this).text(function(i, text) {
-            return text === "{% trans 'If you don\'t have an account' %}" ? 
-                "{% trans '- OR -' %}" : 
-                "{% trans 'If you don\'t have an account' %}";
-        }); {% endcomment %}
     });
 {% endblock %}
