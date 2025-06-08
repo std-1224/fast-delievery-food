@@ -58,6 +58,22 @@ class IndexView(CoreIndexView):
 
         return kwargs
 
+    def post(self, request, *args, **kwargs):
+        # Get delivery type from form submission
+        delivery_type = request.POST.get('delivery_type', 'delivery')
+        # Store in session
+        request.session['delivery_type'] = delivery_type
+
+        if self.request.POST.get('phone_number', None):
+            form = GuestCheckoutForm(**self.get_form_kwargs())
+        else:
+            form = GatewayForm(**self.get_form_kwargs())
+
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
     def form_valid(self, form):
         self.checkout_session.set_guest_email("")
 
@@ -100,17 +116,6 @@ class IndexView(CoreIndexView):
             self.success_url = reverse("checkout:preview")
 
         return redirect(self.get_success_url())
-
-    def post(self, request, *args, **kwargs):
-        if self.request.POST.get('phone_number', None):
-            form = GuestCheckoutForm(**self.get_form_kwargs())
-        else:
-            form = GatewayForm(**self.get_form_kwargs())
-
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
 
 
 class PaymentDetailsView(CorePaymentDetailsView):
@@ -284,13 +289,15 @@ class ShippingMethodView(CheckoutSessionMixin, generic.FormView):
 class ShippingAddressView(CoreShippingAddressView):
     def get(self, request, *args, **kwargs):
         # Check if this is a collection order
-        if request.session.get('delivery_type') == 'collection':
+        delivery_type = request.session.get('delivery_type', 'delivery')
+        if delivery_type == 'collection':
             return redirect('checkout:preview')
         return super().get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         # Check if this is a collection order
-        if request.session.get('delivery_type') == 'collection':
+        delivery_type = request.session.get('delivery_type', 'delivery')
+        if delivery_type == 'collection':
             return redirect('checkout:preview')
         return super().post(request, *args, **kwargs)
 
@@ -341,6 +348,5 @@ class ThankYouView(CheckoutSessionMixin, generic.TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['order_number'] = self.checkout_session.get_order_number()
         ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
         return ctx
