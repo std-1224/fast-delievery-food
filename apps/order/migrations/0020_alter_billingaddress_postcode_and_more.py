@@ -14,14 +14,14 @@ class Migration(migrations.Migration):
             model_name="billingaddress",
             name="postcode",
             field=oscar.models.fields.UppercaseCharField(
-                blank=True, max_length=256, verbose_name="Post/Zip-code"
+                blank=True, max_length=255, verbose_name="Post/Zip-code"
             ),
         ),
         migrations.AlterField(
             model_name="shippingaddress",
             name="postcode",
             field=models.CharField(
-                blank=True, max_length=256, null=True, verbose_name="Postcode"
+                blank=True, max_length=255, null=True, verbose_name="Postcode"
             ),
         ),
     ]
