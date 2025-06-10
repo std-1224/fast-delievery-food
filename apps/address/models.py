@@ -4,11 +4,9 @@ from django.utils.translation import gettext_lazy as _
 from oscar.apps.address.abstract_models import AbstractShippingAddress
 
 class ShippingAddress(AbstractShippingAddress):
-    # Override the postcode field to change its max_length
-    # The original AbstractShippingAddress defines postcode with a default max_length
-    # Redefining it here allows us to set a different max_length.
+    # Override the postcode field to make it required with a default value
     postcode = models.CharField(
-        _("Postcode"), max_length=256, blank=True, null=True)
+        _("Postcode"), max_length=255, blank=False, null=False, default="")
 
     # You can add other custom fields or methods here if needed
 

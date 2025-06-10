@@ -46,7 +46,7 @@ class Migration(migrations.Migration):
                 ('line3', models.CharField(max_length=255, verbose_name='Third line of address', blank=True)),
                 ('line4', models.CharField(max_length=255, verbose_name='City', blank=True)),
                 ('state', models.CharField(max_length=255, verbose_name='State/County', blank=True)),
-                ('postcode', oscar.models.fields.UppercaseCharField(max_length=64, verbose_name='Post/Zip-code', blank=True)),
+                ('postcode', oscar.models.fields.UppercaseCharField(max_length=255, verbose_name='Post/Zip-code', blank=True)),
                 ('search_text', models.TextField(editable=False, verbose_name='Search text - used only for searching addresses')),
                 ('phone_number', oscar.models.fields.PhoneNumberField(verbose_name='Phone number', help_text='In case we need to call you about your order', blank=True)),
                 ('notes', models.TextField(verbose_name='Instructions', help_text='Tell us anything we should know when delivering your order.', blank=True)),

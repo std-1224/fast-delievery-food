@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
             model_name="shippingaddress",
             name="postcode",
             field=models.CharField(
-                blank=True, max_length=128, null=True, verbose_name="Postcode"
+                blank=True, max_length=255, null=True, verbose_name="Postcode"
             ),
         ),
     ]
