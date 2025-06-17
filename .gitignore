@@ -58,7 +58,7 @@ settings_local.py
 /sandbox/whoosh_index/
 /sandbox/logs/
 public
-.env
+# .env
 env
 db.sqlite
 db.sqlite3
