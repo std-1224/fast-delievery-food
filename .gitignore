@@ -60,7 +60,7 @@ settings_local.py
 public
 .env
 env
-db.sqlite
+# db.sqlite
 db.sqlite3
 
 
