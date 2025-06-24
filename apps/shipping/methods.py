@@ -26,7 +26,10 @@ class Standard(methods.Base):
                             excl_tax=shipping_rate, incl_tax=shipping_rate)
 
     def _get_shipping_rate(self, postcode):
-        return Postcode.objects.get(code=postcode).shipping_zone.shipping_price
+        try: 
+            return Postcode.objects.get(code=postcode).shipping_zone.shipping_price
+        except Postcode.DoesNotExist:
+            return None
 
 
 class SelfCollection(methods.Free):

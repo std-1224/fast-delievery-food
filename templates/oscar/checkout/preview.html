@@ -13,6 +13,41 @@
     {% trans "Preview order" %}
 {% endblock %}
 
+{% block content %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-body bg-light mb-3">
+                <h4>{% trans "Contact / Gateway Info" %}</h4>
+                <ul class="list-unstyled">
+                    <li><strong>{% trans "First name" %}:</strong> {{ checkout_session.get_guest_first_name|default_if_none:"-" }}</li>
+                    <li><strong>{% trans "Last name" %}:</strong> {{ checkout_session.get_guest_last_name|default_if_none:"-" }}</li>
+                    <li><strong>{% trans "Email" %}:</strong> {{ checkout_session.get_guest_email|default_if_none:"-" }}</li>
+                    <li><strong>{% trans "Phone" %}:</strong> {{ checkout_session.get_guest_phone_number|default_if_none:"-" }}</li>
+                </ul>
+            </div>
+        </div>
+        {% if delivery_type == 'delivery' and shipping_address %}
+        <div class="col-md-6">
+            <div class="card card-body bg-light mb-3">
+                <h4>{% trans "Shipping Address" %}</h4>
+                <address>
+                    {% for field in shipping_address.active_address_fields %}
+                        {{ field }}<br/>
+                    {% endfor %}
+                </address>
+                {% if shipping_address.phone_number %}
+                    <p><strong>{% trans "Phone" %}:</strong> {{ shipping_address.phone_number }}</p>
+                {% endif %}
+                {% if shipping_address.notes %}
+                    <p><strong>{% trans "Instructions" %}:</strong> {{ shipping_address.notes|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {{ block.super }}
+{% endblock %}
+
 {% block place_order %}
     <form method="post" action="{% url 'checkout:payment-details' %}" id="place_order_form">
         {% csrf_token %}

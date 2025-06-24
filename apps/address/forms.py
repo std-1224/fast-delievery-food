@@ -24,6 +24,18 @@ class UserAddressForm(BaseUserAddressForm):
     def adjust_postcode_field(self):
         self.fields["postcode"].label = "Postcode"
 
+    def clean_postcode(self):
+        # Accept any postcode, no validation
+        return self.cleaned_data.get('postcode')
+
+    def clean(self):
+        # Override the parent clean method to skip postcode validation
+        cleaned_data = super().clean()
+        # Remove any postcode validation errors
+        if 'postcode' in self.errors:
+            del self.errors['postcode']
+        return cleaned_data
+
     class Meta(BaseUserAddressForm.Meta):
         fields = [
             "first_name",
