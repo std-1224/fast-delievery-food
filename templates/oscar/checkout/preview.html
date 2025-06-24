@@ -19,14 +19,28 @@
             <div class="card card-body bg-light mb-3">
                 <h4>{% trans "Contact / Gateway Info" %}</h4>
                 <ul class="list-unstyled">
-                    <li><strong>{% trans "First name" %}:</strong> {{ checkout_session.get_guest_first_name|default_if_none:"-" }}</li>
-                    <li><strong>{% trans "Last name" %}:</strong> {{ checkout_session.get_guest_last_name|default_if_none:"-" }}</li>
-                    <li><strong>{% trans "Email" %}:</strong> {{ checkout_session.get_guest_email|default_if_none:"-" }}</li>
-                    <li><strong>{% trans "Phone" %}:</strong> {{ checkout_session.get_guest_phone_number|default_if_none:"-" }}</li>
+                    <li><strong>{% trans "Customer Type" %}:</strong> {{ customer_type|default:"-" }}</li>
+                    {% if customer_name %}
+                        <li><strong>{% trans "Name" %}:</strong> {{ customer_name }}</li>
+                    {% else %}
+                        <li><strong>{% trans "First name" %}:</strong> {{ guest_first_name|default:"-" }}</li>
+                        <li><strong>{% trans "Last name" %}:</strong> {{ guest_last_name|default:"-" }}</li>
+                    {% endif %}
+                    <li><strong>{% trans "Email" %}:</strong> {{ customer_email|default:guest_email|default:"-" }}</li>
+                    {% if customer_phone or guest_phone_number %}
+                        <li><strong>{% trans "Phone" %}:</strong> {{ customer_phone|default:guest_phone_number|default:"-" }}</li>
+                    {% endif %}
+                    <li><strong>{% trans "Delivery Type" %}:</strong>
+                        {% if delivery_type == 'collection' %}
+                            {% trans "Collection" %}
+                        {% else %}
+                            {% trans "Delivery" %}
+                        {% endif %}
+                    </li>
                 </ul>
             </div>
         </div>
-        {% if delivery_type == 'delivery' and shipping_address %}
+        <!-- {% if delivery_type == 'delivery' and shipping_address %}
         <div class="col-md-6">
             <div class="card card-body bg-light mb-3">
                 <h4>{% trans "Shipping Address" %}</h4>
@@ -42,7 +56,7 @@
                     <p><strong>{% trans "Instructions" %}:</strong> {{ shipping_address.notes|linebreaks }}</p>
                 {% endif %}
             </div>
-        </div>
+        </div> -->
         {% endif %}
     </div>
     {{ block.super }}

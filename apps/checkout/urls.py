@@ -17,6 +17,10 @@ urlpatterns = [
     # Payment details - Payment processing
     path('payment-details/', views.PaymentDetailsView.as_view(), name='payment-details'),
 
+    # Custom PayPal payment - respects delivery type
+    path('paypal/payment/', views.CustomPayPalRedirectView.as_view(as_payment_method=True),
+         name='custom-paypal-direct-payment'),
+
     # Thank you - Order confirmation
     path('thank-you/', views.ThankYouView.as_view(), name='thank-you'),
 ]
