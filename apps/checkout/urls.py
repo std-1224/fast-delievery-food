@@ -21,6 +21,9 @@ urlpatterns = [
     path('paypal/payment/', views.CustomPayPalRedirectView.as_view(as_payment_method=True),
          name='custom-paypal-direct-payment'),
 
+    # Test thank you - For testing without payment
+    path('test-thank-you/', views.TestThankYouView.as_view(), name='test-thank-you'),
+
     # Thank you - Order confirmation
     path('thank-you/', views.ThankYouView.as_view(), name='thank-you'),
 ]

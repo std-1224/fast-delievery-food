@@ -4,9 +4,13 @@
 {% load image_tags %}
 
 {% block title %}
-    {% blocktrans with number=order.number %}
-        Order {{ number }}: confirmation
-    {% endblocktrans %} | {{ block.super }}
+    {% if order %}
+        {% blocktrans with number=order.number %}
+            Order {{ number }}: confirmation
+        {% endblocktrans %} | {{ block.super }}
+    {% else %}
+        {% trans "Order confirmation" %} | {{ block.super }}
+    {% endif %}
 {% endblock title %}
 
 {% block checkout_nav %}
@@ -14,193 +18,122 @@
 {% endblock %}
 
 {% block checkout_title %}
-    {% blocktrans with number=order.number %}
-        Order {{ number }}: confirmation
-    {% endblocktrans %}
+    {% if order %}
+        {% blocktrans with number=order.number %}
+            Order {{ number }}: confirmation
+        {% endblocktrans %}
+    {% else %}
+        {% trans "Order confirmation" %}
+    {% endif %}
 {% endblock %}
 
 {% block content %}
-    <p class="lead">
-        {% if order.guest_phone_number %}
-            {% trans "Your order has been placed and a confirmation WhatsApp message has been sent - your order number is" %}
-        {% else %}
-            {% trans "Your order has been placed and a confirmation email has been sent - your order number is" %}
-        {% endif %}
-        <strong>{{ order.number }}</strong>.
-        <br/>
-        {% trans "Please make a note of this reference or print this page and quote it in any communication with us regarding your order." %}
-    </p>
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <div class="card border-primary">
+                    <div class="card-body p-4">
 
-    <div class="row shipping-payment d-print-none">
-        <div class="col-sm-6">
-            {% block shipping_info %}
-                <div class="sub-header">
-                    <h2>{% trans "Shipping" %}</h2>
-                </div>
-                <div class="card card-body bg-light">
-                    <h3>{% trans "Address" %}</h3>
-                    {% if order.shipping_address %}
-                        <address>
-                            {% for field in order.shipping_address.active_address_fields %}
-                                {{ field }}<br/>
-                            {% endfor %}
-                        </address>
+                        <!-- Confirmation Message -->
+                        <div class="alert alert-warning border border-warning mb-4" style="background-color: #fff3cd;">
+                            <strong>
+                                {% if order.guest_phone_number %}
+                                    {% trans "Your order has been placed and a confirmation WhatsApp message has been sent" %}
+                                {% else %}
+                                    {% trans "Your order has been placed and a confirmation email has been sent" %}
+                                {% endif %}
+                            </strong>
+                        </div>
 
-                        {% if order.shipping_address.phone_number %}
-                            <h4>{% trans "Contact" %}</h4>
-                            <p>
-                                {% trans "Phone" %}: {{ order.shipping_address.phone_number }}
-                                {% if order.guest_email %}
-                                    <br/>{% trans "Email" %}: {{ order.guest_email }}
+                        <!-- Customer Information -->
+                        {% if order %}
+                            <div class="mb-3">
+                                {% if customer_email %}
+                                    <div class="mb-2"><strong>{{ customer_email }}</strong></div>
                                 {% endif %}
                                 {% if order.guest_phone_number %}
-                                    <br/>{% trans "Buyer's phone number" %}: {{ order.guest_phone_number }}
+                                    <div class="text-muted">+ {{ order.guest_phone_number }}</div>
                                 {% endif %}
-                            </p>
+                            </div>
+
+                            <!-- Dispatch Method and Address -->
+                            <div class="mb-4">
+                                <div class="mb-2">
+                                    <strong>{% trans "Dispatch method" %}:</strong>
+                                    {% if delivery_type == 'collection' %}
+                                        {% trans "collection" %}
+                                    {% else %}
+                                        {% trans "delivery" %}
+                                    {% endif %}
+                                </div>
+
+                                {% if order.shipping_address and delivery_type == 'delivery' %}
+                                    <div>
+                                        <strong>{% trans "Address" %}:</strong>
+                                        {% for field in order.shipping_address.active_address_fields %}
+                                            {{ field }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Order Items -->
+                            <div class="mb-4">
+                                {% for line in order.lines.all %}
+                                    <div class="mb-1">
+                                        {{ line.quantity }} x {{ line.product_title }}
+                                        {% if line.line_price_before_discounts_incl_tax %}
+                                            ( {{ line.line_price_before_discounts_incl_tax|currency:order.currency }} )
+                                        {% endif %}
+                                    </div>
+                                    {% if line.attributes.exists %}
+                                        <div class="text-muted small">
+                                            {% for value in line.attribute_values %}
+                                                {{ value }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="mb-4">
+                                <div><strong>{% trans "Total order" %}:</strong> {{ order.total_incl_tax|currency:order.currency }}</div>
+
+                                <!-- Payment Method -->
+                                {% for source in order.sources.all %}
+                                    <div><strong>{% trans "Payment by" %}:</strong> {{ source.source_type.name }}</div>
+                                {% empty %}
+                                    <div><strong>{% trans "Payment by" %}:</strong> {% trans "Cash" %}</div>
+                                {% endfor %}
+
+                                <!-- Delivery Information for delivery orders -->
+                                {% if delivery_type == 'delivery' %}
+                                    <div><strong>{% trans "Delivery date" %}:</strong> {% now "d/m/Y" %}</div>
+                                    <div><strong>{% trans "Delivery time" %}:</strong> {% now "H:i" %}</div>
+                                {% endif %}
+                            </div>
+
                         {% endif %}
 
-                        {% if order.shipping_address.notes %}
-                            <h4>{% trans "Instructions" %}</h4>
-                            <p>{{ order.shipping_address.notes|linebreaks }}</p>
-                        {% endif %}
-                    {% else %}
-                        <p>{% trans "No shipping address required." %}</p>
-                    {% endif %}
-                </div>
-            {% endblock %}
-        </div>
+                        <!-- Reference Note -->
+                        <div class="text-muted mb-4">
+                            {% trans "Please make a note of this reference" %}
+                        </div>
 
-        <div class="col-sm-6">
-            {% block payment_info %}
-                <div class="sub-header">
-                    <h2>{% trans "Payment" %}</h2>
-                </div>
-                <div class="card card-body bg-light">
-                    {% for source in order.sources.all %}
-                        {% if source.source_type.name == 'Cash' %}
-                            <p>
-                                {% blocktrans with amount=source.amount_allocated|currency:source.currency %}
-                                    The amount of {{ amount }} will be paid in cash. Thank you.
-                                {% endblocktrans %}
-                            </p>
-                        {% else %}
-                            <p>
-                                {% blocktrans with amount=source.amount_allocated|currency:source.currency %}
-                                    Your payment of {{ amount }} has been successful. Thank you.
-                                {% endblocktrans %}
-                            </p>
-                        {% endif %}
-                    {% empty %}
-                        <p>
-                        {% trans "No payment was required for this order." %}
-                        </p>
-                    {% endfor %}
+                        <!-- Continue Shopping Button -->
+                        <div class="text-end">
+                            <a href="{% url 'catalogue:index' %}" class="btn btn-primary">
+                                {% trans "Continue shopping" %}
+                            </a>
+                        </div>
 
-                    {% if order.billing_address %}
-                        <h4>{% trans "Billing address" %}</h4>
-                        <address>
-                            {% for field in order.billing_address.active_address_fields %}
-                                {{ field }}<br/>
-                            {% endfor %}
-                        </address>
-                    {% endif %}
+                    </div>
                 </div>
-
-            {% endblock %}
+            </div>
         </div>
     </div>
 
-    {% block order_contents %}
-        <div class="sub-header">
-            <h2>{% trans "Order contents" %}</h2>
-        </div>
-
-        <div class="basket-title">
-            <div class="row">
-                <p class="col-sm-9 h4">{% trans "Items purchased" %}</p>
-                <p class="col-sm-1 h4 text-center">{% trans "Quantity" %}</p>
-                <p class="col-sm-2 h4 text-right">{% trans "Total" %}</p>
-            </div>
-        </div>
-
-        {% for line in order.lines.all %}
-            <div class="basket-items">
-                <div class="row">
-                    <div class="col-sm-2">
-                        <div class="image_container w-100">
-                            {% with image=line.product.primary_image %}
-                                {% oscar_thumbnail image.original "200x200" upscale=False as thumb %}
-                                <a href="{{ line.product.get_absolute_url }}">
-                                    <img src="{{ thumb.url }}" alt="{{ product.get_title }}" class="img-thumbnail w-auto mx-auto my-0">
-                                </a>
-                            {% endwith %}
-                        </div>
-                    </div>
-                    <div class="col-sm-7">
-                        <h3><a href="{{ line.product.get_absolute_url }}">{{ line.product_title }}</a></h3>
-                        {% if line.attributes.exists %}
-                        <ul>
-                            {% for value in line.attribute_values %}
-                                <li>
-                                    {{ value }}
-                                </li>
-                            {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </div>
-                    <div class="col-sm-1 text-center">
-                        {{ line.quantity }}
-                    </div>
-                    <div class="col-sm-2 text-right">
-                        <p class="price_color">
-                            {% if show_tax_separately %}
-                                {{ line.line_price_before_discounts_excl_tax|currency:order.currency }}
-                            {% else %}
-                                {{ line.line_price_before_discounts_incl_tax|currency:order.currency }}
-                            {% endif %}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
-
-        {% block basket_totals %}
-            <div class="row d-print-none">
-                <div class="col-sm-6">&nbsp;</div>
-                <div class="col-sm-6">
-                    <div class="sub-header">
-                        <h2>{% trans 'Totals' %}</h2>
-                    </div>
-                    {% include 'oscar/order/partials/basket_totals.html' %}
-                </div>
-            </div>
-        {% endblock basket_totals %}
-
-    {% endblock order_contents %}
-
-    {% block order_tracking %}
-        {% if not order.user %}
-            <div class="sub-header">
-                <h2>{% trans "Tracking your order" %}</h2>
-            </div>
-            <p>{% trans "You can track the status of your order" %}
-                <a class="btn btn-primary" href="{% url 'customer:anon-order' order_number=order.number hash=order.verification_hash %}">{% trans "View order status" %}</a>.</p>
-        {% endif %}
-    {% endblock %}
-
-
-    {% block order_actions %}
-        <div class="form-group">
-            <div class="row">
-                <div class="col-sm-4">
-                    <p><a onclick="window.print()" href="#" class="btn btn-primary btn-block btn-lg">{% trans "Print this page" %}</a></p>
-                </div>
-                <div class="col-sm-4 offset-sm-4">
-                    <p><a href="{{ homepage_url }}" class="btn btn-primary btn-block btn-lg">{% trans "Continue shopping" %}</a></p>
-                </div>
-            </div>
-        </div>
-    {% endblock order_actions %}
 {% endblock content %}
 
 {% block tracking %}

@@ -1,4 +1,5 @@
 from urllib.parse import quote
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -509,6 +510,15 @@ class ThankYouView(CheckoutSessionMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+
+        # Add customer email for display
+        if self.request.user.is_authenticated:
+            ctx['customer_email'] = self.request.user.email
+        else:
+            # Get guest email from checkout session
+            checkout_session = CheckoutSessionData(self.request)
+            ctx['customer_email'] = checkout_session.get_guest_email()
+
         # Add order details if available
         order_number = self.request.session.get('checkout_order_number')
         if order_number:
@@ -516,7 +526,159 @@ class ThankYouView(CheckoutSessionMixin, generic.TemplateView):
                 ctx['order'] = Order.objects.get(number=order_number)
             except Order.DoesNotExist:
                 pass
+
+        # For testing: create realistic mock order data if no real order exists
+        if not ctx.get('order') and 'test_mode' in self.request.GET:
+            from decimal import Decimal
+            import random
+
+            # Create a realistic order number
+            order_number = f"ORD-{random.randint(10000, 99999)}"
+
+            # Create mock order object with realistic data based on session
+            class MockOrder:
+                def __init__(self, request):
+                    from oscar.core.loading import get_model
+
+                    self.number = order_number
+                    # Use basket total if available, otherwise default
+                    try:
+                        self.total_incl_tax = request.basket.total_incl_tax or Decimal('25.99')
+                    except:
+                        self.total_incl_tax = Decimal('25.99')
+
+                    # Currency
+                    self.currency = 'GBP'
+
+                    # Get guest info from session
+                    self.guest_phone_number = request.session.get('guest_phone_number')
+                    self.guest_email = request.session.get('guest_email')
+
+                    # Get customer info
+                    if request.user.is_authenticated:
+                        self.user = request.user
+                        self.guest_phone_number = None  # Authenticated users don't use guest phone
+                    else:
+                        self.user = None
+
+                    # Mock shipping address for delivery orders
+                    delivery_type = request.session.get('delivery_type', 'delivery')
+                    if delivery_type == 'delivery':
+                        # Create mock shipping address
+                        class MockShippingAddress:
+                            def __init__(self):
+                                self.first_name = request.session.get('guest_first_name', 'John')
+                                self.last_name = request.session.get('guest_last_name', 'Doe')
+                                self.line1 = '123 Test Street'
+                                self.line4 = 'Test City'
+                                self.postcode = 'GU7 2QG'
+                                self.country = 'United Kingdom'
+                                self.phone_number = request.session.get('guest_phone_number')
+                                self.notes = ''
+
+                            @property
+                            def active_address_fields(self):
+                                fields = []
+                                if self.first_name and self.last_name:
+                                    fields.append(f"{self.first_name} {self.last_name}")
+                                if self.line1:
+                                    fields.append(self.line1)
+                                if self.line4:
+                                    fields.append(self.line4)
+                                if self.postcode:
+                                    fields.append(self.postcode)
+                                if self.country:
+                                    fields.append(self.country)
+                                return fields
+
+                        self.shipping_address = MockShippingAddress()
+                    else:
+                        self.shipping_address = None
+
+                    # Mock billing address (same as shipping for simplicity)
+                    self.billing_address = self.shipping_address
+
+                    # Mock payment sources
+                    class MockSource:
+                        def __init__(self, amount, currency):
+                            self.amount_allocated = amount
+                            self.currency = currency
+                            self.source_type = type('MockSourceType', (), {'name': 'Test Payment'})()
+
+                    class MockSources:
+                        def __init__(self, amount, currency):
+                            self._sources = [MockSource(amount, currency)]
+
+                        def all(self):
+                            return self._sources
+
+                    self.sources = MockSources(self.total_incl_tax, self.currency)
+
+                    # Mock order lines (basket items)
+                    class MockLine:
+                        def __init__(self, name, quantity, price, currency):
+                            # Create mock product with proper image handling
+                            class MockProduct:
+                                def __init__(self):
+                                    self.title = name
+                                    self.primary_image = None  # No image for test products
+
+                                def get_absolute_url(self):
+                                    return '#'  # Placeholder URL for test
+
+                            self.product = MockProduct()
+                            self.product_title = name  # Template uses line.product_title
+                            self.quantity = quantity
+                            self.line_price_before_discounts_incl_tax = price
+                            self.line_price_before_discounts_excl_tax = price
+
+                            # Mock attributes for template
+                            class MockAttributes:
+                                def exists(self):
+                                    return False
+
+                            self.attributes = MockAttributes()
+                            self.attribute_values = []
+
+                    class MockLines:
+                        def __init__(self, total_price, currency):
+                            self._lines = [MockLine('Test Product', 1, total_price, currency)]
+
+                        def all(self):
+                            return self._lines
+
+                    self.lines = MockLines(self.total_incl_tax, self.currency)
+
+                    # Verification hash for order tracking
+                    self.verification_hash = 'test-hash-123'
+
+                    self.is_test = True
+
+                def __str__(self):
+                    return f"Order {self.number}"
+
+            ctx['order'] = MockOrder(self.request)
+            ctx['is_test_order'] = True
+
+            # Add customer email for test orders
+            if not ctx.get('customer_email'):
+                if self.request.user.is_authenticated:
+                    ctx['customer_email'] = self.request.user.email
+                else:
+                    ctx['customer_email'] = self.request.session.get('guest_email', 'test@example.com')
+
         return ctx
+
+
+class TestThankYouView(CheckoutSessionMixin, generic.RedirectView):
+    """
+    Test view to simulate order completion and redirect to thank you page
+    """
+    def get_redirect_url(self, *args, **kwargs):
+        # Set a test order number in session
+        self.request.session['checkout_order_number'] = 'TEST-12345'
+        # Add test mode parameter
+        return reverse('checkout:thank-you') + '?test_mode=1'
 
 
 class CustomPayPalRedirectView(PayPalRedirectView):
