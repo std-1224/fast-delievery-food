@@ -249,6 +249,16 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
 
         return super().dispatch(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        """Handle POST requests from payment method selection"""
+        # Store payment method in session
+        payment_method = request.POST.get('payment_method')
+        if payment_method:
+            request.session['payment_method'] = payment_method
+
+        # Render the preview page with the selected payment method
+        return self.get(request, *args, **kwargs)
+
     def get_pre_conditions(self, request):
         return [
             'check_basket_is_not_empty',
@@ -301,11 +311,17 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
                               self.checkout_session.get_guest_first_name() or '')
             guest_last_name = (self.request.session.get('guest_last_name') or
                              self.checkout_session.get_guest_last_name() or '')
-            ctx['customer_name'] = f"{guest_first_name} {guest_last_name}".strip()
+            customer_name = f"{guest_first_name} {guest_last_name}".strip()
+            ctx['customer_name'] = customer_name if customer_name else None
             ctx['customer_email'] = self.checkout_session.get_guest_email()
             ctx['customer_phone'] = (self.request.session.get('guest_phone_number') or
                                    self.checkout_session.get_guest_phone_number())
             ctx['customer_type'] = 'Guest User'
+
+        # Add payment method from POST or session (if available)
+        payment_method = (self.request.POST.get('payment_method') or
+                         self.request.session.get('payment_method', 'Cash'))
+        ctx['payment_method'] = payment_method
 
         return ctx
 
