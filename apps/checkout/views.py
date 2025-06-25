@@ -435,6 +435,55 @@ class PaymentDetailsView(CorePaymentDetailsView):
             from oscar.apps.shipping.methods import NoShippingRequired
             return NoShippingRequired()
 
+    def check_shipping_data_is_captured(self, request):
+        """
+        Override to handle delivery type specific shipping requirements
+        and ensure shipping method is set for delivery orders
+        """
+        delivery_type = request.session.get('delivery_type', 'delivery')
+
+        if delivery_type == 'collection':
+            # For collection orders, ensure NoShippingRequired is set
+            if not self.checkout_session.is_shipping_method_set(request.basket):
+                self.checkout_session.use_shipping_method(NoShippingRequired().code)
+            return None
+
+        # For delivery orders, check shipping address and method
+        if not self.checkout_session.is_shipping_address_set():
+            return redirect('checkout:shipping-address')
+
+        # Ensure shipping method is set for delivery orders
+        if not self.checkout_session.is_shipping_method_set(request.basket):
+            shipping_address = self.get_shipping_address()
+            if shipping_address:
+                # Get available shipping methods for this address
+                repository = Repository()
+                methods = repository.get_available_shipping_methods(
+                    basket=request.basket,
+                    shipping_addr=shipping_address,
+                    user=request.user,
+                    request=request
+                )
+                # Use the first available delivery method (not self-collection)
+                delivery_method = None
+                for method in methods:
+                    if method.code == 'delivery':
+                        delivery_method = method
+                        self.checkout_session.use_shipping_method(method.code)
+                        break
+
+                if not delivery_method:
+                    # No delivery method found - create a default one
+                    # This handles cases where postcode data is missing
+                    from apps.shipping.methods import Standard
+                    default_method = Standard(shipping_address)
+                    self.checkout_session.use_shipping_method(default_method.code)
+            else:
+                # No shipping address, redirect to shipping address page
+                return redirect('checkout:shipping-address')
+
+        return None
+
     def post(self, request, *args, **kwargs):
         if request.POST.get("action", "") == "place_order":
             return super().post(request, *args, **kwargs)
