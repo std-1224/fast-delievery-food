@@ -1,20 +1,41 @@
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django.shortcuts import redirect
 from oscar.apps.checkout import exceptions
 from oscar.apps.checkout.session import CheckoutSessionMixin as CoreCheckoutSessionMixin
+from oscar.core.loading import get_class
+
+CheckoutSessionData = get_class("checkout.utils", "CheckoutSessionData")
 
 
 class CheckoutSessionMixin(CoreCheckoutSessionMixin):
+
+    @property
+    def checkout_session(self):
+        """
+        Return the checkout session manager
+        """
+        if not hasattr(self, '_checkout_session'):
+            self._checkout_session = CheckoutSessionData(self.request)
+        return self._checkout_session
+
+    @checkout_session.setter
+    def checkout_session(self, value):
+        """
+        Allow setting the checkout session
+        """
+        self._checkout_session = value
     def check_user_email_is_captured(self, request):
         if (
                 not request.user.is_authenticated
                 and not self.checkout_session.get_guest_email()
                 and not self.checkout_session.get_guest_phone_number()
         ):
-            raise exceptions.FailedPreCondition(
-                url=reverse("checkout:index"),
-                message=_("Please either sign in or enter your email address"),
-            )
+            # Return a redirect response instead of raising an exception
+            # This allows the PreviewView.dispatch() method to handle it properly
+            return redirect('checkout:index')
+
+        return None
 
     def build_submission(self, **kwargs):
         submission = super().build_submission(**kwargs)

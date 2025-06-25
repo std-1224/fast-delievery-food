@@ -1,44 +1,29 @@
- # apps/checkout/urls.py
-from django.urls import path, re_path
-from oscar.core.application import Application
-# Import views from your local app, where we will override them
-from apps.checkout import views
+from django.urls import path
+from oscar.apps.checkout.apps import CheckoutConfig
+from . import views
 
-class CheckoutApplication(Application):
-    name = 'checkout'
-    # Reference the views from your local app
-    index_view = views.IndexView
-    shipping_address_view = views.ShippingAddressView
-    # shipping_method_view is removed
-    payment_method_view = views.PaymentMethodView
-    payment_details_view = views.PaymentDetailsView
-    preview_view = views.PreviewView
-    thankyou_view = views.ThankYouView
+app_name = 'checkout'
 
-    def get_urls(self):
-        urls = [
-            # Determine if the user is creating a new account, or using an
-            # existing account or proceeding as a guest.
-            path('', self.index_view.as_view(), name='index'),
+urlpatterns = [
+    # Gateway - First step for all orders
+    path('', views.IndexView.as_view(), name='index'),
 
-            # Shipping address (only for delivery)
-            path('shipping-address/', self.shipping_address_view.as_view(), name='shipping-address'),
+    # Shipping address - Only for delivery orders
+    path('shipping-address/', views.ShippingAddressView.as_view(), name='shipping-address'),
 
-            # Shipping method - REMOVED
+    # Preview - Order summary (both collection and delivery)
+    path('preview/', views.PreviewView.as_view(), name='preview'),
 
-            # Payment method (after preview)
-            path('payment-method/', self.payment_method_view.as_view(), name='payment-method'),
+    # Payment details - Payment processing
+    path('payment-details/', views.PaymentDetailsView.as_view(), name='payment-details'),
 
-            # Order preview (after information or shipping address)
-            path('preview/', self.preview_view.as_view(), name='preview'),
+    # Custom PayPal payment - respects delivery type
+    path('paypal/payment/', views.CustomPayPalRedirectView.as_view(as_payment_method=True),
+         name='custom-paypal-direct-payment'),
 
-            # Payment details
-            path('payment-details/', self.payment_details_view.as_view(), name='payment-details'),
+    # Test thank you - For testing without payment
+    path('test-thank-you/', views.TestThankYouView.as_view(), name='test-thank-you'),
 
-            # Thank you
-            re_path(r'thank-you/(?P<order_number>[\w-]+)/$',
-                    self.thankyou_view.as_view(), name='thank-you'),
-        ]
-        return urls
-
-application = CheckoutApplication()
+    # Thank you - Order confirmation
+    path('thank-you/', views.ThankYouView.as_view(), name='thank-you'),
+]

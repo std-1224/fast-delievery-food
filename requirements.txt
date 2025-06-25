@@ -106,3 +106,4 @@ cryptography==43.0.1
 firebase-admin==6.5.0
 channels[daphne]==4.0.0
 channels-redis==4.0.0
+geopy==2.4.1

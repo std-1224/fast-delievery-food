@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Function to perform the search
         const performSearch = async () => {
             const postcode = postcodeInput.value;
+            console.log("postcode", postcode);
             // Only search if postcode has at least 3 characters (adjust as needed)
             if (postcode.length > 2) {
                 // Use the URL of the new backend endpoint
@@ -189,8 +190,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultsContainer.style.display = 'none'; // Hide the results container
             }
         };
-        // Listen for click on the search icon
-        searchIcon.addEventListener('click', performSearch);
+        // Listen for click on the search icon (only if not already attached)
+        if (!searchIcon.hasAttribute('data-listener-attached')) {
+            searchIcon.addEventListener('click', performSearch);
+            searchIcon.setAttribute('data-listener-attached', 'true');
+        }
 
         // Hide results when the input loses focus, with a slight delay
         postcodeInput.addEventListener('blur', () => {

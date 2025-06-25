@@ -142,7 +142,6 @@
     {{ block.super }}
     oscar.checkout.gateway.init();
     const deliveryType =localStorage.getItem('deliveryType') || 'delivery';
-    console.log("delivery_type: ", deliveryType)
     document.getElementById('delivery_type_input').value = deliveryType;
     const input = document.querySelector("#phone_input");
     const iti = intlTelInput(input, {

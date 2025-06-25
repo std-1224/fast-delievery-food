@@ -22,11 +22,11 @@
 
     <div class="row shipping-payment ">
         {% block shipping_address %}
-            <div class="col-sm-6">
-                <div class="sub-header">
-                    <h2>{% trans "Shipping" %}</h2>
-                </div>
-                {% if shipping_address %}
+            {% if delivery_type == 'delivery' and shipping_address %}
+                <div class="col-sm-6">
+                    <div class="sub-header">
+                        <h2>{% trans "Shipping" %}</h2>
+                    </div>
                     <div class="card card-body bg-light">
                         <h3>
                           {% trans "Address" %}
@@ -59,8 +59,8 @@
                             <p>{{ shipping_address.notes|linebreaks }}</p>
                         {% endif %}
                     </div>
-                {% endif %}
-            </div>
+                </div>
+            {% endif %}
         {% endblock shipping_address %}
 
         {# You will almost certainly want to override this block to provide a payment summary #}
