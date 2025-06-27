@@ -297,25 +297,27 @@ class ShippingAddressView(CoreShippingAddressView):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        """Override GET to ensure collection orders never see the shipping address form"""
+        """Show shipping address form for both delivery and collection (for instructions)"""
         delivery_type = request.session.get('delivery_type')
-        print(f"🚨 ShippingAddressView.get: delivery_type={delivery_type}")
+        print(f"✅ ShippingAddressView.get: delivery_type={delivery_type}")
 
+        # For collection orders, set no shipping required but still show form for instructions
         if delivery_type == 'collection':
-            print("🚨 COLLECTION ORDER IN GET METHOD - REDIRECTING TO PREVIEW!")
-            # Set no shipping required for collection
             try:
                 if not self.checkout_session.is_shipping_method_set(request.basket):
                     self.checkout_session.use_shipping_method(NoShippingRequired().code)
+                    print("✅ Set NoShippingRequired method for collection order")
             except Exception as e:
                 print(f"Warning: Could not set shipping method: {e}")
 
-            messages.info(request, "Collection orders go directly to preview.")
-            return redirect('checkout:preview')
-
-        # For delivery orders, proceed with normal form display
-        print("✅ ShippingAddressView.get: Showing shipping address form for delivery order")
+        # Show form for both delivery and collection (for instructions)
+        print("✅ ShippingAddressView.get: Showing address form for instructions")
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        return ctx
 
     def get_success_url(self):
         # Override to redirect directly to preview, skipping shipping method selection

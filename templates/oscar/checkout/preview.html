@@ -4,192 +4,178 @@
 {% load image_tags %}
 
 {% block title %}
-    {% trans "Order preview" %} | {{ block.super }}
+{% trans "Order preview" %} | {{ block.super }}
 {% endblock %}
 
 {% block checkout_nav %}
-    {% include 'oscar/checkout/nav.html' with step=4 %}
+{% include 'oscar/checkout/nav.html' with step=4 %}
 {% endblock %}
 
 {% block checkout_title %}
-    {% trans "Preview order" %}
+{% trans "Preview order" %}
 {% endblock %}
 
 {% block content %}
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-lg-10 col-xl-10">
-                <div class="bg-white p-4">
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-10">
+            <div class="bg-white p-4">
 
-                        <!-- Customer Information -->
-                        <div class="mb-4">
-                            {% if customer_name %}
-                                <div class="mb-2 h5">{{ customer_name }}</div>
-                            {% endif %}
-                            {% if guest_phone_number %}
-                                <div class="text-muted">+{{ guest_phone_number }}</div>
-                            {% endif %}
-                        </div>
+                <!-- Customer Information -->
+                <div class="mb-4">
+                    {% if customer_name %}
+                    <div class="mb-2 h5">{{ customer_name }}</div>
+                    {% endif %}
+                    {% if guest_phone_number %}
+                    <div class="text-muted">+{{ guest_phone_number }}</div>
+                    {% endif %}
+                </div>
 
-                        <!-- Dispatch Method and Address -->
-                        <div class="mb-4">
-                            <div class="mb-2">
-                                <strong>{% trans "How" %}:</strong>
-                                {% if delivery_type == 'collection' %}
-                                    {% trans "Collection" %}
-                                {% else %}
-                                    {% trans "Delivery" %}
-                                {% endif %}
-                            </div>
-
-                            {% if shipping_address and delivery_type == 'delivery' %}
-                                <div>
-                                    {% for field in shipping_address.active_address_fields %}
-                                        {{ field }}{% if not forloop.last %}, {% endif %}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Order Items -->
-                        <div class="mb-4">
-                            {% for line in basket.all_lines %}
-                                <div class="d-flex justify-content-between mb-1">
-                                    <div>{{ line.quantity }}x {{ line.product_title }}</div>
-                                    <div>
-                                        {% if line.line_price_incl_tax %}
-                                            ({{ line.line_price_incl_tax|currency:basket.currency }})
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% if line.attributes.exists %}
-                                    <div class="text-muted small mb-2">
-                                        {% for value in line.attribute_values %}
-                                            {{ value }}{% if not forloop.last %}, {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-
-                            <!-- Show any discounts -->
-                            {% for discount in basket.offer_applications %}
-                                <div class="d-flex justify-content-between mb-1 text-success">
-                                    <div>1x {{ discount.offer.name }}</div>
-                                    <div>(-{{ discount.discount|currency:basket.currency }})</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-
-                        <!-- Comment Section -->
-                        <div class="mb-4">
-                            <div><strong>{% trans "Comment" %}:</strong> {% trans "No Chillie please" %}</div>
-                        </div>
-
-                        <!-- Delivery Information for delivery orders -->
-                        {% if delivery_type == 'delivery' %}
-                            <div class="mb-4">
-                                <div class="mb-1"><strong>{% trans "Delivery date" %}:</strong> {% now "d/m/y" %}</div>
-                                <div><strong>{% trans "Delivery time" %}:</strong> {% now "H:i" %}</div>
-                            </div>
+                <!-- Dispatch Method and Address -->
+                <div class="mb-4">
+                    <div class="mb-2">
+                        <strong>{% trans "How" %}:</strong>
+                        {% if delivery_type == 'collection' %}
+                        {% trans "Collection" %}
+                        {% else %}
+                        {% trans "Delivery" %}
                         {% endif %}
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <!-- {% if delivery_type == 'delivery' and shipping_address %}
-        <div class="col-md-6">
-            <div class="card card-body bg-light mb-3">
-                <h4>{% trans "Shipping Address" %}</h4>
-                <address>
-                    {% for field in shipping_address.active_address_fields %}
-                        {{ field }}<br/>
+                    </div>
+
+                    {% if shipping_address and delivery_type == 'delivery' %}
+                    <div>
+                        {% for field in shipping_address.active_address_fields %}
+                        {{ field }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Order Items -->
+                <div class="mb-4">
+                    {% for line in basket.all_lines %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <div>{{ line.quantity }}x {{ line.product_title }}</div>
+                        <div>
+                            {% if line.line_price_incl_tax %}
+                            ({{ line.line_price_incl_tax|currency:basket.currency }})
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if line.attributes.exists %}
+                    <div class="text-muted small mb-2">
+                        {% for value in line.attribute_values %}
+                        {{ value }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% endfor %}
-                </address>
-                {% if shipping_address.phone_number %}
-                    <p><strong>{% trans "Phone" %}:</strong> {{ shipping_address.phone_number }}</p>
+
+                    <!-- Show any discounts -->
+                    {% for discount in basket.offer_applications %}
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <div>1x {{ discount.offer.name }}</div>
+                        <div>(-{{ discount.discount|currency:basket.currency }})</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Comment Section -->
+                <div class="mb-4">
+                    <div><strong>{% trans "Comment" %}:</strong> {% trans "No Chillie please" %}</div>
+                </div>
+
+                <!-- Delivery Information for delivery orders -->
+                {% if delivery_type == 'delivery' %}
+                <div class="mb-4">
+                    <div class="mb-1"><strong>{% trans "Delivery date" %}:</strong> {% now "d/m/y" %}</div>
+                    <div><strong>{% trans "Delivery time" %}:</strong> {% now "H:i" %}</div>
+                </div>
                 {% endif %}
             </div>
         </div>
-        {% endif %} -->
-
-        
-        
     </div>
-    {{ block.super }}
-{% endblock %}
+</div>
 
-{% block place_order %}
-    <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="place_order" />
-        <input type="hidden" name="payment_method" value="{{payment_method|default:'cash'}}" />
+<!-- Totals and Place Order Section -->
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-10">
+            <div class="bg-white p-4">
 
-                                    <!-- Cart Section -->
-                                    <div class="mb-3">
-                                        <div class="text-muted mb-2">{% trans "Cart" %}</div>
-                                        <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
-                                            <div><strong>{% trans "Cart total" %}</strong></div>
-                                            <div><strong>{{ basket.total_incl_tax|currency:basket.currency }}</strong></div>
-                                        </div>
-                                    </div>
+                <!-- Totals Section -->
+                <div class="row">
+                    <div class="col-md-6 offset-md-6">
+                        <h4>{% trans "Totals" %}</h4>
 
-                                    <!-- Dispatch Section -->
-                                    <div class="mb-3">
-                                        <div class="text-muted mb-2">{% trans "Dispatch" %}</div>
-                                        <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
-                                            <div><strong>
-                                                {% if delivery_type == 'collection' %}
-                                                    {% trans "Collection" %}
-                                                {% else %}
-                                                    {% trans "Delivery" %}
-                                                {% endif %}
-                                            </strong></div>
-                                            <div><strong>
-                                                {% if delivery_type == 'collection' %}
-                                                    £0.00
-                                                {% else %}
-                                                    £3.50
-                                                {% endif %}
-                                            </strong></div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Order Total -->
-                                    <div class="d-flex justify-content-between p-2 mb-4" style="background-color: #fef9e4;">
-                                        <div><strong>{% trans "Order total" %}</strong></div>
-                                        <div><strong class="text-success">{{ order_total.incl_tax|currency:basket.currency }}</strong></div>
-                                    </div>
-                                </div>
-
-                                <!-- Place Order Form -->
-                                <form method="post" action="{% url 'checkout:payment-details' %}" id="place_order_form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="place_order" />
-                                    <input type="hidden" name="payment_method" value="{{payment_method}}" />
-
-                                    {% comment %}
-                                        When submitting sensitive data on the payment details page (eg a bankcard)
-                                        we don't want to save the data and so we pass the bound form to the preview
-                                        template and render it in a hidden div.  Then the payment information will
-                                        get re-submitted when the user confirms the order.
-                                    {% endcomment %}
-                                    <div style="display:none">
-                                        {% block hiddenforms %}{{ stripe_token_form }}{% endblock %}
-                                    </div>
-
-                                    <!-- Place Order Button -->
-                                    <div class="text-end">
-                                        <button id='place-order' type="submit" class="btn btn-primary btn-lg px-5" data-loading-text="{% trans 'Submitting...' %}" style="background-color: #007bff; border-color: #007bff;">
-                                            {% trans "Place order" %}
-                                        </button>
-                                    </div>
-                                </form>
+                        <!-- Cart Total -->
+                        <div class="mb-2">
+                            <h5>{% trans "Cart" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
+                                <div><strong>{% trans "Cart total" %}</strong></div>
+                                <div><strong>{{ basket.total_incl_tax|currency:basket.currency }}</strong></div>
                             </div>
                         </div>
 
+                        <!-- Dispatch -->
+                        <div class="mb-2">
+                            <h5>{% trans "Dispatch" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
+                                <div><strong>
+                                    {% if delivery_type == 'collection' %}
+                                        {% trans "No shipping required" %}
+                                    {% else %}
+                                        {% trans "Delivery" %}
+                                    {% endif %}
+                                </strong></div>
+                                <div><strong>
+                                    {% if delivery_type == 'collection' %}
+                                        £0.00
+                                    {% else %}
+                                        {% if shipping_charge %}
+                                            {{ shipping_charge.incl_tax|currency:basket.currency }}
+                                        {% else %}
+                                            £3.50
+                                        {% endif %}
+                                    {% endif %}
+                                </strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Order Total -->
+                        <div class="mb-4">
+                            <h5>{% trans "Order total" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #e8f5e8;">
+                                <div><strong>{% trans "Order total" %}</strong></div>
+                                <div><strong class="text-success">{{ order_total.incl_tax|currency:basket.currency }}</strong></div>
+                            </div>
+                            <small class="text-muted">{% trans "Taxes will be added during checkout." %}</small>
+                        </div>
+
+                        <!-- Place Order Form -->
+                        <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="place_order" />
+                            <input type="hidden" name="payment_method" value="{{payment_method|default:'cash'}}" />
+
+                            {% comment %}
+                                When submitting sensitive data on the payment details page (eg a bankcard)
+                                we don't want to save the data and so we pass the bound form to the preview
+                                template and render it in a hidden div.  Then the payment information will
+                                get re-submitted when the user confirms the order.
+                            {% endcomment %}
+                            <div style="display:none">
+                                {% block hiddenforms %}{{ stripe_token_form }}{% endblock %}
+                            </div>
+
+                            <button id='place-order' type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
+                                {% trans "Place order" %}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-{% endblock content %}
+</div>
+{% endblock %}
