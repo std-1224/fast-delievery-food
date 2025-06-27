@@ -26,9 +26,13 @@ class CheckoutSessionMixin(CoreCheckoutSessionMixin):
         """
         self._checkout_session = value
     def check_user_email_is_captured(self, request):
+        # For authenticated users, email is already captured from their account
+        if request.user.is_authenticated:
+            return None
+
+        # For guest users, check if email is captured
         if (
-                not request.user.is_authenticated
-                and not self.checkout_session.get_guest_email()
+                not self.checkout_session.get_guest_email()
                 and not self.checkout_session.get_guest_phone_number()
         ):
             # Return a redirect response instead of raising an exception

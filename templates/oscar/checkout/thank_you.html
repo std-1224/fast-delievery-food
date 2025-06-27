@@ -74,6 +74,12 @@
                                             {{ field }}{% if not forloop.last %}, {% endif %}
                                         {% endfor %}
                                     </div>
+                                    {% if order.shipping_address.notes %}
+                                        <div class="mt-2">
+                                            <strong>{% trans "Delivery Instructions" %}:</strong>
+                                            {{ order.shipping_address.notes|linebreaks }}
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                             </div>
 

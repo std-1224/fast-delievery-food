@@ -53,14 +53,59 @@ Source = get_model('payment', 'Source')
 class IndexView(CoreIndexView):
     """
     Gateway view - handles delivery type selection and user authentication
+
+    Workflows:
+    - Authenticated + Delivery: Direct to Shipping Address
+    - Authenticated + Collection: Direct to Preview
+    - Guest + Delivery: Gateway → Delivery Address
+    - Guest + Collection: Gateway → Preview
     """
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         delivery_type = self.request.session.get('delivery_type', 'delivery')
         context['delivery_type'] = delivery_type
         context['guest_checkout_form'] = GuestCheckoutForm(**self.get_form_kwargs())
         return context
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests - route authenticated users directly, show gateway for guests"""
+
+        # TEMPORARY DEBUG: Show what's happening
+        print("=" * 80)
+        print("🔍 DEBUGGING CHECKOUT FLOW")
+        print(f"🔍 User authenticated: {request.user.is_authenticated}")
+        print(f"🔍 URL: {request.get_full_path()}")
+        print(f"🔍 URL parameters: {dict(request.GET)}")
+        print(f"🔍 Session delivery_type: {request.session.get('delivery_type')}")
+        print(f"🔍 All session keys: {list(request.session.keys())}")
+        print("=" * 80)
+
+        # For authenticated users, route directly based on delivery type
+        if request.user.is_authenticated:
+            delivery_type = request.session.get('delivery_type')
+
+            # ALWAYS check URL parameter and update session if provided
+            url_delivery_type = request.GET.get('delivery_type')
+            if url_delivery_type:
+                delivery_type = url_delivery_type
+                request.session['delivery_type'] = delivery_type
+                print(f"✅ UPDATED delivery_type from URL parameter: {delivery_type}")
+            elif not delivery_type:
+                # Only set default if no session value AND no URL parameter
+                delivery_type = 'delivery'
+                request.session['delivery_type'] = delivery_type
+                print(f"✅ Set default delivery_type: {delivery_type}")
+
+            print(f"🎯 FINAL DECISION: delivery_type = {delivery_type}")
+            print("🚀 CALLING redirect_to_next_step() method")
+
+            # Use the existing redirect_to_next_step method which has the correct logic
+            return self.redirect_to_next_step()
+
+        # For guest users, show the gateway form
+        print("👤 Guest user, showing gateway form")
+        return super().get(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = FormMixin.get_form_kwargs(self)
@@ -135,17 +180,48 @@ class IndexView(CoreIndexView):
     # it judeg the deliveryType and skip the step by DeliveryType
 
     def redirect_to_next_step(self):
-        """Redirect to appropriate next step based on delivery type"""
-        print("Redirecting to next step")
+        """Redirect to appropriate next step based on delivery type and authentication"""
         delivery_type = self.request.session.get('delivery_type', 'delivery')
-        if delivery_type == 'delivery':
-            # Delivery: Gateway -> Shipping Address -> Preview -> Payment -> Confirmation
-            return HttpResponseRedirect(reverse('checkout:shipping-address'))
+        is_authenticated = self.request.user.is_authenticated
+
+        print("=" * 80)
+        print("🔍 REDIRECT_TO_NEXT_STEP DEBUG")
+        print(f"🔍 delivery_type from session: '{delivery_type}'")
+        print(f"🔍 delivery_type type: {type(delivery_type)}")
+        print(f"🔍 is_authenticated: {is_authenticated}")
+        print(f"🔍 delivery_type == 'delivery': {delivery_type == 'delivery'}")
+        print(f"🔍 delivery_type == 'collection': {delivery_type == 'collection'}")
+        print("=" * 80)
+
+        if is_authenticated:
+            # Authenticated users: Delivery goes to shipping address, Collection goes to preview
+            if delivery_type == 'delivery':
+                print("✅ DELIVERY DETECTED - GOING TO SHIPPING ADDRESS")
+                redirect_url = reverse('checkout:shipping-address')
+                print(f"✅ Redirect URL: {redirect_url}")
+                return HttpResponseRedirect(redirect_url)
+            elif delivery_type == 'collection':
+                print("✅ COLLECTION DETECTED - GOING TO PREVIEW")
+                self.checkout_session.use_shipping_method(NoShippingRequired().code)
+                redirect_url = reverse('checkout:preview')
+                print(f"✅ Redirect URL: {redirect_url}")
+                return HttpResponseRedirect(redirect_url)
+            else:
+                print(f"🚨 UNKNOWN DELIVERY TYPE: '{delivery_type}' - DEFAULTING TO SHIPPING ADDRESS")
+                redirect_url = reverse('checkout:shipping-address')
+                print(f"🚨 Default Redirect URL: {redirect_url}")
+                return HttpResponseRedirect(redirect_url)
         else:
-            # Collection: Gateway -> Preview -> Payment -> Confirmation
-            # Set no shipping required for collection
-            self.checkout_session.use_shipping_method(NoShippingRequired().code)
-            return HttpResponseRedirect(reverse('checkout:preview'))
+            # Guest users: Different flows based on delivery type
+            if delivery_type == 'delivery':
+                # Guest + Delivery: Gateway -> Delivery Address -> Preview -> Payment -> Confirmation
+                print("Guest user with delivery: Redirecting to shipping-address")
+                return HttpResponseRedirect(reverse('checkout:shipping-address'))
+            else:
+                # Guest + Collection: Gateway -> Preview -> Payment -> Confirmation
+                print("Guest user with collection: Redirecting to preview")
+                self.checkout_session.use_shipping_method(NoShippingRequired().code)
+                return HttpResponseRedirect(reverse('checkout:preview'))
 
 
 class ShippingAddressView(CoreShippingAddressView):
@@ -154,16 +230,61 @@ class ShippingAddressView(CoreShippingAddressView):
     """
     form_class = ShippingAddressForm
 
+    def form_valid(self, form):
+        """Override to populate missing fields from gateway data before saving"""
+        # Get gateway data from session
+        first_name = (self.request.session.get('guest_first_name') or
+                     self.checkout_session.get_guest_first_name())
+        last_name = (self.request.session.get('guest_last_name') or
+                    self.checkout_session.get_guest_last_name())
+        phone_number = (self.request.session.get('guest_phone_number') or
+                       self.checkout_session.get_guest_phone_number())
+
+        # For authenticated users, use their profile data as fallback
+        if self.request.user.is_authenticated:
+            first_name = first_name or self.request.user.first_name
+            last_name = last_name or self.request.user.last_name
+
+        # Add the missing fields to the form's cleaned_data
+        if first_name:
+            form.cleaned_data['first_name'] = first_name
+        if last_name:
+            form.cleaned_data['last_name'] = last_name
+        if phone_number:
+            form.cleaned_data['phone_number'] = phone_number
+
+        return super().form_valid(form)
+
     def dispatch(self, request, *args, **kwargs):
         # Check if delivery type is collection - if so, redirect to preview
         # This check must happen BEFORE calling super().dispatch() to avoid pre-condition checks
         delivery_type = request.session.get('delivery_type')
-        if delivery_type == 'collection':
-            # Ensure NoShippingRequired method is set for collection orders
-            if not self.checkout_session.is_shipping_method_set(request.basket):
-                self.checkout_session.use_shipping_method(NoShippingRequired().code)
+        print(f"ShippingAddressView.dispatch: delivery_type={delivery_type}, user_authenticated={request.user.is_authenticated}")
 
-            messages.info(request, "Shipping address is not required for collection orders.")
+        # For authenticated users, if no delivery type is set, try to get from URL parameter
+        if request.user.is_authenticated and not delivery_type:
+            delivery_type = request.GET.get('delivery_type')
+            if delivery_type:
+                request.session['delivery_type'] = delivery_type
+                print(f"ShippingAddressView: Set delivery_type from URL parameter: {delivery_type}")
+            else:
+                # If still no delivery type, redirect to checkout index to set it properly
+                print("ShippingAddressView: No delivery type found, redirecting to checkout index")
+                return redirect('checkout:index')
+
+        if delivery_type == 'collection':
+            print("🚨 CRITICAL: COLLECTION ORDER DETECTED IN SHIPPING ADDRESS VIEW!")
+            print("🚨 REDIRECTING TO PREVIEW IMMEDIATELY - NO SHIPPING ADDRESS NEEDED!")
+
+            # Ensure NoShippingRequired method is set for collection orders
+            try:
+                if not self.checkout_session.is_shipping_method_set(request.basket):
+                    self.checkout_session.use_shipping_method(NoShippingRequired().code)
+                    print("✅ Set NoShippingRequired method for collection order")
+            except Exception as e:
+                print(f"Warning: Could not set shipping method: {e}")
+
+            messages.info(request, "Collection orders do not require a shipping address.")
             return redirect('checkout:preview')
 
         # If no delivery type is set, redirect to index to select delivery type
@@ -172,7 +293,29 @@ class ShippingAddressView(CoreShippingAddressView):
             return redirect('checkout:index')
 
         # For delivery orders, proceed with normal flow
+        print(f"ShippingAddressView: Proceeding with delivery flow for authenticated user")
         return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        """Override GET to ensure collection orders never see the shipping address form"""
+        delivery_type = request.session.get('delivery_type')
+        print(f"🚨 ShippingAddressView.get: delivery_type={delivery_type}")
+
+        if delivery_type == 'collection':
+            print("🚨 COLLECTION ORDER IN GET METHOD - REDIRECTING TO PREVIEW!")
+            # Set no shipping required for collection
+            try:
+                if not self.checkout_session.is_shipping_method_set(request.basket):
+                    self.checkout_session.use_shipping_method(NoShippingRequired().code)
+            except Exception as e:
+                print(f"Warning: Could not set shipping method: {e}")
+
+            messages.info(request, "Collection orders go directly to preview.")
+            return redirect('checkout:preview')
+
+        # For delivery orders, proceed with normal form display
+        print("✅ ShippingAddressView.get: Showing shipping address form for delivery order")
+        return super().get(request, *args, **kwargs)
 
     def get_success_url(self):
         # Override to redirect directly to preview, skipping shipping method selection
@@ -221,10 +364,17 @@ class ShippingAddressView(CoreShippingAddressView):
 
 class PreviewView(CheckoutSessionMixin, generic.TemplateView):
     """
-    Preview view - Step 2 for collection, Step 3 for delivery
-    Shows order summary before payment
+    Preview view - Shows order summary before payment
+
+    Workflows:
+    - Authenticated + Delivery: Shipping Address -> Preview -> Payment -> Confirmation
+    - Authenticated + Collection: Preview -> Payment -> Confirmation
+    - Guest + Delivery: Gateway -> Delivery Address -> Preview -> Payment -> Confirmation
+    - Guest + Collection: Gateway -> Preview -> Payment -> Confirmation
     """
     template_name = 'oscar/checkout/preview.html'
+
+
     
     def dispatch(self, request, *args, **kwargs):
         # Check basic pre-conditions
@@ -239,7 +389,7 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
             return redirect('checkout:index')
 
         if delivery_type == 'delivery':
-            # For delivery: must have shipping address
+            # For delivery: must have shipping address (both authenticated and guest users)
             if not self.checkout_session.is_shipping_address_set():
                 return redirect('checkout:shipping-address')
         elif delivery_type == 'collection':
@@ -260,6 +410,8 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
         ctx = super().get_context_data(**kwargs)
         delivery_type = self.request.session.get('delivery_type', 'delivery')
         ctx['delivery_type'] = delivery_type
+
+
         
         # Add order summary context
         ctx['basket'] = self.request.basket
@@ -288,6 +440,9 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
                                  self.checkout_session.get_guest_first_name())
         ctx['guest_last_name'] = (self.request.session.get('guest_last_name') or
                                 self.checkout_session.get_guest_last_name())
+
+        # Add payment method (default to cash)
+        ctx['payment_method'] = 'cash'
 
         # Add comprehensive gateway information
         if self.request.user.is_authenticated:
@@ -352,6 +507,12 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
 
     def post(self, request, *args, **kwargs):
         """Handle form submission to proceed to payment"""
+        # Check if this is a place_order action
+        if request.POST.get("action", "") == "place_order":
+            # Redirect to payment-details for actual order processing
+            return redirect('checkout:payment-details')
+
+        # Otherwise, normal preview form submission
         return redirect('checkout:payment-details')
 
 
@@ -359,9 +520,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
     """
     Payment details view - handles payment processing
     """
-    preview = True
 
-    @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         # Check delivery type and ensure shipping method is set for collection
         delivery_type = request.session.get('delivery_type')
@@ -484,10 +643,7 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
         return None
 
-    def post(self, request, *args, **kwargs):
-        if request.POST.get("action", "") == "place_order":
-            return super().post(request, *args, **kwargs)
-        return self.render_payment_details(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -545,6 +701,8 @@ class PaymentDetailsView(CorePaymentDetailsView):
 
     def payment_metadata(self, order_number, total, **kwargs):
         return {'order_number': order_number}
+
+
 
     def get_success_url(self):
         return reverse('checkout:thank-you')

@@ -2,6 +2,9 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from oscar.apps.checkout.forms import GatewayForm as BaseGatewayForm, ShippingAddressForm as BaseShippingAddressForm
+from oscar.core.loading import get_model
+
+Country = get_model("address", "Country")
 
 
 class ShippingAddressForm(BaseShippingAddressForm):
@@ -15,6 +18,24 @@ class ShippingAddressForm(BaseShippingAddressForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.adjust_country_field()
+
+        # Explicitly remove redundant fields that are already collected in Gateway
+        fields_to_remove = ['first_name', 'last_name', 'phone_number']
+        for field_name in fields_to_remove:
+            if field_name in self.fields:
+                del self.fields[field_name]
+
+    def adjust_country_field(self):
+        """Adjust country field based on available shipping countries"""
+        countries = Country._default_manager.filter(is_shipping_country=True)
+
+        # No need to show country dropdown if there is only one option
+        if len(countries) == 1:
+            self.fields.pop("country", None)
+            self.instance.country = countries[0]
+        else:
+            self.fields["country"].queryset = countries
+            self.fields["country"].empty_label = None
 
     def clean_postcode(self):
         # Accept any postcode, no validation
@@ -30,14 +51,11 @@ class ShippingAddressForm(BaseShippingAddressForm):
 
     class Meta(BaseShippingAddressForm.Meta):
         fields = [
-            "first_name",
-            "last_name",
             "line1",
             "line2",
             "line4",
             "postcode",
             "country",
-            "phone_number",
             "notes",
         ]
 
@@ -55,6 +73,22 @@ class PaymentMethodForm(forms.Form):
 
 def get_payment_method_display(payment_method):
     return dict(settings.PAYMENT_METHODS).get(payment_method)
+
+
+class DeliveryInstructionsForm(forms.Form):
+    """
+    Form for delivery/collection instructions on the preview page
+    """
+    delivery_instructions = forms.CharField(
+        label=_("Special Instructions"),
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': _('Any special instructions for your order (optional)'),
+            'class': 'form-control'
+        }),
+        required=False,
+        help_text=_("Optional: Add any special instructions for your order")
+    )
 
 
 class StripeTokenForm(forms.Form):
