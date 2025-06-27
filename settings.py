@@ -20,12 +20,14 @@ DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=["*"])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://*", "https://*"])
 EMAIL_SUBJECT_PREFIX = env.str('EMAIL_SUBJECT_PREFIX', '')
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = env.str('EMAIL_HOST')
-EMAIL_USE_TLS = True
-EMAIL_PORT = env.int('EMAIL_PORT')
-EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
+# Use console backend for development to avoid SMTP issues
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = env.str('EMAIL_HOST')
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = env.int('EMAIL_PORT')
+# EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 
 WHATSAPP_TOKEN = env.str('WHATSAPP_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = env.str('WHATSAPP_PHONE_NUMBER_ID')
