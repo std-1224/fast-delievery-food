@@ -76,17 +76,23 @@
                                     </div>
                                 {% endif %}
 
-                                {% if order.shipping_address.notes %}
-                                    <div class="mt-2">
-                                        <strong>
-                                            {% if delivery_type == 'delivery' %}
-                                                {% trans "Delivery Instructions" %}:
-                                            {% else %}
-                                                {% trans "Collection Instructions" %}:
-                                            {% endif %}
-                                        </strong>
-                                        {{ order.shipping_address.notes|linebreaks }}
-                                    </div>
+                                {% comment %} Instructions handling based on delivery type {% endcomment %}
+                                {% if delivery_type == 'delivery' %}
+                                    {% comment %} For delivery orders, instructions come from session {% endcomment %}
+                                    {% if delivery_instructions %}
+                                        <div class="mt-2">
+                                            <strong>{% trans "Delivery Instructions" %}:</strong>
+                                            {{ delivery_instructions|linebreaks }}
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    {% comment %} For collection orders, instructions come from shipping address notes {% endcomment %}
+                                    {% if order.shipping_address.notes %}
+                                        <div class="mt-2">
+                                            <strong>{% trans "Collection Instructions" %}:</strong>
+                                            {{ order.shipping_address.notes|linebreaks }}
+                                        </div>
+                                    {% endif %}
                                 {% endif %}
                             </div>
 

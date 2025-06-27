@@ -103,9 +103,32 @@
         <div class="col-lg-10 col-xl-10">
             <div class="bg-white p-4">
 
-                <!-- Totals Section -->
-                <div class="row">
-                    <div class="col-md-6 offset-md-6">
+                <!-- Place Order Form -->
+                <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="place_order" />
+                    <input type="hidden" name="payment_method" value="{{payment_method|default:'cash'}}" />
+
+                    <!-- Totals Section -->
+                    <div class="row">
+                        {% if delivery_type == 'delivery' and delivery_instructions_form %}
+                        <!-- Delivery Instructions for delivery orders -->
+                        <div class="col-md-6">
+                            <div class="card card-body bg-light">
+                                <h5>{% trans "Delivery Instructions" %}</h5>
+                                <div class="form-group">
+                                    {{ delivery_instructions_form.delivery_instructions.label_tag }}
+                                    {{ delivery_instructions_form.delivery_instructions }}
+                                    {% if delivery_instructions_form.delivery_instructions.help_text %}
+                                        <small class="form-text text-muted">{{ delivery_instructions_form.delivery_instructions.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                        {% else %}
+                        <div class="col-md-6 offset-md-6">
+                        {% endif %}
                         <h4>{% trans "Totals" %}</h4>
 
                         <!-- Cart Total -->
@@ -152,12 +175,6 @@
                             <small class="text-muted">{% trans "Taxes will be added during checkout." %}</small>
                         </div>
 
-                        <!-- Place Order Form -->
-                        <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="place_order" />
-                            <input type="hidden" name="payment_method" value="{{payment_method|default:'cash'}}" />
-
                             {% comment %}
                                 When submitting sensitive data on the payment details page (eg a bankcard)
                                 we don't want to save the data and so we pass the bound form to the preview
@@ -171,9 +188,9 @@
                             <button id='place-order' type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
                                 {% trans "Place order" %}
                             </button>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </div>

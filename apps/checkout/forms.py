@@ -16,6 +16,8 @@ class ShippingAddressForm(BaseShippingAddressForm):
     )
 
     def __init__(self, *args, **kwargs):
+        # Get delivery type from kwargs if provided
+        delivery_type = kwargs.pop('delivery_type', 'delivery')
         super().__init__(*args, **kwargs)
         self.adjust_country_field()
 
@@ -24,6 +26,10 @@ class ShippingAddressForm(BaseShippingAddressForm):
         for field_name in fields_to_remove:
             if field_name in self.fields:
                 del self.fields[field_name]
+
+        # For delivery orders, remove notes field (will be on preview page)
+        if delivery_type == 'delivery' and 'notes' in self.fields:
+            del self.fields['notes']
 
     def adjust_country_field(self):
         """Adjust country field based on available shipping countries"""

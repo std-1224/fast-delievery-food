@@ -314,6 +314,11 @@ class ShippingAddressView(CoreShippingAddressView):
         print("✅ ShippingAddressView.get: Showing address form for instructions")
         return super().get(request, *args, **kwargs)
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+        return kwargs
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
@@ -456,6 +461,15 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
         # Add payment method (default to cash)
         ctx['payment_method'] = 'cash'
 
+        # Add delivery instructions form for delivery orders only
+        if delivery_type == 'delivery':
+            from .forms import DeliveryInstructionsForm
+            # Pre-populate form with existing instructions if any
+            initial_data = {
+                'delivery_instructions': self.request.session.get('delivery_instructions', '')
+            }
+            ctx['delivery_instructions_form'] = DeliveryInstructionsForm(initial=initial_data)
+
         # Add comprehensive gateway information
         if self.request.user.is_authenticated:
             # For authenticated users
@@ -525,8 +539,22 @@ class PreviewView(CheckoutSessionMixin, generic.TemplateView):
 
     def post(self, request, *args, **kwargs):
         """Handle form submission to proceed to payment"""
+        print(f"PreviewView POST data: {dict(request.POST)}")
+
+        # Save delivery instructions if provided (for delivery orders)
+        delivery_instructions = request.POST.get('delivery_instructions', '')
+        print(f"Found delivery_instructions in POST: '{delivery_instructions}'")
+
+        if delivery_instructions:
+            request.session['delivery_instructions'] = delivery_instructions
+            request.session.save()  # Ensure session is saved
+            print(f"✅ Saved delivery instructions to session: {delivery_instructions}")
+        else:
+            print("❌ No delivery instructions found in POST data")
+
         # Check if this is a place_order action
         if request.POST.get("action", "") == "place_order":
+            print("Place order action detected - redirecting to payment-details")
             # Redirect to payment-details for actual order processing
             return redirect('checkout:payment-details')
 
@@ -735,6 +763,12 @@ class ThankYouView(CheckoutSessionMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['delivery_type'] = self.request.session.get('delivery_type', 'delivery')
+
+        # Add delivery instructions for delivery orders
+        delivery_instructions = self.request.session.get('delivery_instructions', '')
+        print(f"ThankYouView - delivery_instructions from session: '{delivery_instructions}'")
+        print(f"ThankYouView - session keys: {list(self.request.session.keys())}")
+        ctx['delivery_instructions'] = delivery_instructions
 
         # Add customer email for display
         if self.request.user.is_authenticated:
