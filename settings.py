@@ -18,7 +18,22 @@ location = lambda x: os.path.join(
 DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=["*"])
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://*", "https://*"])
+
+# CSRF settings - Add your Hetzner domain here
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
+    "https://heehaw.uk",
+    "http://heehaw.uk",
+    "https://www.heehaw.uk",
+    "http://www.heehaw.uk",
+    "http://localhost:8000",
+    "https://localhost:8000"
+])
+
+# Additional CSRF settings for production
+CSRF_COOKIE_SECURE = not DEBUG  # Use secure cookies in production
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
 
 # CORS settings for API access
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development
@@ -26,6 +41,10 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://heehaw.uk",
+    "http://heehaw.uk",
+    "https://www.heehaw.uk",
+    "http://www.heehaw.uk"
 ]
 
 EMAIL_SUBJECT_PREFIX = env.str('EMAIL_SUBJECT_PREFIX', '')
