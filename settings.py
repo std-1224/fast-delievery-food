@@ -17,7 +17,12 @@ location = lambda x: os.path.join(
 
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=["*"])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=["*"], "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://heehaw.uk",
+    "http://heehaw.uk",
+    "https://www.heehaw.uk",
+    "http://www.heehaw.uk")
 
 # CSRF settings - Add your Hetzner domain here
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
