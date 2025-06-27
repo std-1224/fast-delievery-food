@@ -1,89 +1,198 @@
-{% extends "oscar/checkout/checkout.html" %}
+{% extends "oscar/checkout/layout.html" %}
+{% load currency_filters %}
 {% load i18n %}
+{% load image_tags %}
 
 {% block title %}
-    {% trans "Order preview" %} | {{ block.super }}
+{% trans "Order preview" %} | {{ block.super }}
 {% endblock %}
 
 {% block checkout_nav %}
-    {% include 'oscar/checkout/nav.html' with step=4 %}
+{% include 'oscar/checkout/nav.html' with step=4 %}
 {% endblock %}
 
 {% block checkout_title %}
-    {% trans "Preview order" %}
+{% trans "Preview order" %}
 {% endblock %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card card-body bg-light mb-3">
-                <h4>{% trans "Contact / Gateway Info" %}</h4>
-                <ul class="list-unstyled">
-                    <li><strong>{% trans "Customer Type" %}:</strong> {{ customer_type|default:"-" }}</li>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-10">
+            <div class="bg-white p-4">
+
+                <!-- Customer Information -->
+                <div class="mb-4">
                     {% if customer_name %}
-                        <li><strong>{% trans "Name" %}:</strong> {{ customer_name }}</li>
-                    {% else %}
-                        <li><strong>{% trans "First name" %}:</strong> {{ guest_first_name|default:"-" }}</li>
-                        <li><strong>{% trans "Last name" %}:</strong> {{ guest_last_name|default:"-" }}</li>
+                    <div class="mb-2 h5">{{ customer_name }}</div>
                     {% endif %}
-                    <li><strong>{% trans "Email" %}:</strong> {{ customer_email|default:guest_email|default:"-" }}</li>
-                    {% if customer_phone or guest_phone_number %}
-                        <li><strong>{% trans "Phone" %}:</strong> {{ customer_phone|default:guest_phone_number|default:"-" }}</li>
+                    {% if guest_phone_number %}
+                    <div class="text-muted">+{{ guest_phone_number }}</div>
                     {% endif %}
-                    <li><strong>{% trans "Delivery Type" %}:</strong>
-                        {% if delivery_type == 'collection' %}
-                            {% trans "Collection" %}
-                        {% else %}
-                            {% trans "Delivery" %}
-                        {% endif %}
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <!-- {% if delivery_type == 'delivery' and shipping_address %}
-        <div class="col-md-6">
-            <div class="card card-body bg-light mb-3">
-                <h4>{% trans "Shipping Address" %}</h4>
-                <address>
-                    {% for field in shipping_address.active_address_fields %}
-                        {{ field }}<br/>
-                    {% endfor %}
-                </address>
-                {% if shipping_address.phone_number %}
-                    <p><strong>{% trans "Phone" %}:</strong> {{ shipping_address.phone_number }}</p>
-                {% endif %}
-                {% if shipping_address.notes %}
-                    <p><strong>{% trans "Instructions" %}:</strong> {{ shipping_address.notes|linebreaks }}</p>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %} -->
-    </div>
-    {{ block.super }}
-{% endblock %}
-
-{% block place_order %}
-    <form method="post" action="{% url 'checkout:payment-details' %}" id="place_order_form">
-        {% csrf_token %}
-        {% comment %} <input type="hidden" name="action" value="place_order" /> {% endcomment %}
-        <input type="hidden" name="payment_method" value="{{payment_method}}" />
-
-        {% comment %}
-            When submitting sensitive data on the payment details page (eg a bankcard)
-            we don't want to save the data and so we pass the bound form to the preview
-            template and render it in a hidden div.  Then the payment information will
-            get re-submitted when the user confirms the order.
-        {% endcomment %}
-        <div style="display:none">
-            {% block hiddenforms %}{{ stripe_token_form }}{% endblock %}
-        </div>
-
-        <div class="form-group clearfix">
-            <div class="row">
-                <div class="col-sm-3 offset-sm-9">
-                     <button id='place-order' type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">{% trans "Place order" %}</button>
                 </div>
+
+                <!-- Dispatch Method and Address -->
+                <div class="mb-4">
+                    <div class="mb-2">
+                        <strong>{% trans "How" %}:</strong>
+                        {% if delivery_type == 'collection' %}
+                        {% trans "Collection" %}
+                        {% else %}
+                        {% trans "Delivery" %}
+                        {% endif %}
+                    </div>
+
+                    {% if shipping_address and delivery_type == 'delivery' %}
+                    <div>
+                        {% for field in shipping_address.active_address_fields %}
+                        {{ field }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Order Items -->
+                <div class="mb-4">
+                    {% for line in basket.all_lines %}
+                    <div class="d-flex justify-content-between mb-1">
+                        <div>{{ line.quantity }}x {{ line.product_title }}</div>
+                        <div>
+                            {% if line.line_price_incl_tax %}
+                            ({{ line.line_price_incl_tax|currency:basket.currency }})
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if line.attributes.exists %}
+                    <div class="text-muted small mb-2">
+                        {% for value in line.attribute_values %}
+                        {{ value }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- Show any discounts -->
+                    {% for discount in basket.offer_applications %}
+                    <div class="d-flex justify-content-between mb-1 text-success">
+                        <div>1x {{ discount.offer.name }}</div>
+                        <div>(-{{ discount.discount|currency:basket.currency }})</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Comment Section -->
+                <div class="mb-4">
+                    <div><strong>{% trans "Comment" %}:</strong> {% trans "No Chillie please" %}</div>
+                </div>
+
+                <!-- Delivery Information for delivery orders -->
+                {% if delivery_type == 'delivery' %}
+                <div class="mb-4">
+                    <div class="mb-1"><strong>{% trans "Delivery date" %}:</strong> {% now "d/m/y" %}</div>
+                    <div><strong>{% trans "Delivery time" %}:</strong> {% now "H:i" %}</div>
+                </div>
+                {% endif %}
             </div>
         </div>
-    </form>
-{% endblock place_order %}
+    </div>
+</div>
+
+<!-- Totals and Place Order Section -->
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-10">
+            <div class="bg-white p-4">
+
+                <!-- Place Order Form -->
+                <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="place_order" />
+                    <input type="hidden" name="payment_method" value="{{payment_method|default:'cash'}}" />
+
+                    <!-- Totals Section -->
+                    <div class="row">
+                        {% if delivery_type == 'delivery' and delivery_instructions_form %}
+                        <!-- Delivery Instructions for delivery orders -->
+                        <div class="col-md-6">
+                            <div class="card card-body bg-light">
+                                <h5>{% trans "Delivery Instructions" %}</h5>
+                                <div class="form-group">
+                                    {{ delivery_instructions_form.delivery_instructions.label_tag }}
+                                    {{ delivery_instructions_form.delivery_instructions }}
+                                    {% if delivery_instructions_form.delivery_instructions.help_text %}
+                                        <small class="form-text text-muted">{{ delivery_instructions_form.delivery_instructions.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                        {% else %}
+                        <div class="col-md-6 offset-md-6">
+                        {% endif %}
+                        <h4>{% trans "Totals" %}</h4>
+
+                        <!-- Cart Total -->
+                        <div class="mb-2">
+                            <h5>{% trans "Cart" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
+                                <div><strong>{% trans "Cart total" %}</strong></div>
+                                <div><strong>{{ basket.total_incl_tax|currency:basket.currency }}</strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Dispatch -->
+                        <div class="mb-2">
+                            <h5>{% trans "Dispatch" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #fef9e4;">
+                                <div><strong>
+                                    {% if delivery_type == 'collection' %}
+                                        {% trans "No shipping required" %}
+                                    {% else %}
+                                        {% trans "Delivery" %}
+                                    {% endif %}
+                                </strong></div>
+                                <div><strong>
+                                    {% if delivery_type == 'collection' %}
+                                        £0.00
+                                    {% else %}
+                                        {% if shipping_charge %}
+                                            {{ shipping_charge.incl_tax|currency:basket.currency }}
+                                        {% else %}
+                                            £3.50
+                                        {% endif %}
+                                    {% endif %}
+                                </strong></div>
+                            </div>
+                        </div>
+
+                        <!-- Order Total -->
+                        <div class="mb-4">
+                            <h5>{% trans "Order total" %}</h5>
+                            <div class="d-flex justify-content-between p-2" style="background-color: #e8f5e8;">
+                                <div><strong>{% trans "Order total" %}</strong></div>
+                                <div><strong class="text-success">{{ order_total.incl_tax|currency:basket.currency }}</strong></div>
+                            </div>
+                            <small class="text-muted">{% trans "Taxes will be added during checkout." %}</small>
+                        </div>
+
+                            {% comment %}
+                                When submitting sensitive data on the payment details page (eg a bankcard)
+                                we don't want to save the data and so we pass the bound form to the preview
+                                template and render it in a hidden div.  Then the payment information will
+                                get re-submitted when the user confirms the order.
+                            {% endcomment %}
+                            <div style="display:none">
+                                {% block hiddenforms %}{{ stripe_token_form }}{% endblock %}
+                            </div>
+
+                            <button id='place-order' type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">
+                                {% trans "Place order" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

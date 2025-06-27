@@ -2,21 +2,37 @@
 {% load i18n %}
 
 {% block title %}
-    {% trans "Delivery address" %} | {{ block.super }}
+    {% if delivery_type == 'collection' %}
+        {% trans "Collection details" %} | {{ block.super }}
+    {% else %}
+        {% trans "Delivery address" %} | {{ block.super }}
+    {% endif %}
 {% endblock %}
 
 {% block checkout_nav %}
     {% include 'oscar/checkout/nav.html' with step=1 %}
 {% endblock %}
 
-{% block checkout_title %}{% trans "Delivery address" %}{% endblock %}
+{% block checkout_title %}
+    {% if delivery_type == 'collection' %}
+        {% trans "Collection details" %}
+    {% else %}
+        {% trans "Delivery address" %}
+    {% endif %}
+{% endblock %}
 
 {% block order_contents %}{% endblock %}
 
 {% block shipping_address %}
 <div class="col-sm-12">
     <div class="sub-header">
-        <h2>{% trans "Where should we deliver to?" %}</h2>
+        <h2>
+            {% if delivery_type == 'collection' %}
+                {% trans "Collection instructions" %}
+            {% else %}
+                {% trans "Where should we deliver to?" %}
+            {% endif %}
+        </h2>
     </div>
     {% if user.is_authenticated %}
         {% if addresses %}

@@ -117,7 +117,9 @@
         <span>{{s_config.currency}}[[total]]</span>
       </div>
     </div>
-    <a href="/checkout" class="go-to-checkout-btn">
+    <a :href="'/checkout?delivery_type=' + store.state.deliveryType"
+       class="go-to-checkout-btn"
+       @click="console.log('Checkout clicked with delivery type:', store.state.deliveryType)">
       Checkout ({{s_config.currency}}[[total]])
     </a>
   </div>

@@ -5,7 +5,7 @@
     {% spaceless %}
         <li class="nav-item step1 {% if step == 1 %}active{% else %}{% if step == 2 %}previous{% else %}{% if step > 1 %}visited{% else %}disabled{% endif %}{% endif %}{% endif %} delivery-step" style="display: none;">
             {% if step == 2 or step == 3 or step == 4 %}
-                <a href="{% url 'checkout:shipping-address' %}" class="nav-link">
+                <a href="{% url 'checkout:index' %}?delivery_type=delivery" class="nav-link">
                     <i class="fas fa-chevron-right"></i>
                     <span>
                         {% trans "1. Delivery address" %}
