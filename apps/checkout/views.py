@@ -151,7 +151,9 @@ class IndexView(CoreIndexView):
         phone_number = form.cleaned_data["phone_number"]
         first_name = form.cleaned_data["first_name"]
         last_name = form.cleaned_data["last_name"]
-        
+        order_date = form.cleaned_data.get("order_date")
+        order_time = form.cleaned_data.get("order_time")
+
         self.checkout_session.set_guest_email(email)
 
         # Store additional guest info in both session and checkout session
@@ -159,11 +161,17 @@ class IndexView(CoreIndexView):
         self.request.session['guest_first_name'] = first_name
         self.request.session['guest_last_name'] = last_name
 
+        # Store order date and time if provided
+        if order_date:
+            self.request.session['order_date'] = order_date.isoformat()
+        if order_time:
+            self.request.session['order_time'] = order_time.isoformat()
+
         # Also store in checkout session for consistency
         self.checkout_session.set_guest_info(first_name, last_name, phone_number)
-        
+
         signals.start_checkout.send_robust(sender=self, request=self.request, email=email)
-        
+
         return self.redirect_to_next_step()
 
     def handle_user_checkout(self, form):

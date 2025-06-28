@@ -6,6 +6,7 @@ from django.core.files.storage import FileSystemStorage
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from import_export.formats.base_formats import CSV
+from rest_framework.authentication import SessionAuthentication
 
 django.utils.translation.ugettext = gettext
 env = environ.Env()
@@ -21,6 +22,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     "*",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://localhost:8000",
     "https://heehaw.uk",
     "http://heehaw.uk",
     "https://www.heehaw.uk",
@@ -34,7 +36,9 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[
     "https://www.heehaw.uk",
     "http://www.heehaw.uk",
     "http://localhost:8000",
-    "https://localhost:8000"
+    "https://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://127.0.0.1:8000"
 ])
 
 # Additional CSRF settings for production
@@ -546,10 +550,15 @@ try:
 except ImportError:
     pass
 
+# Custom SessionAuthentication that doesn't enforce CSRF for API endpoints
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'settings.CsrfExemptSessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [

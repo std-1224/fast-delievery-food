@@ -125,6 +125,8 @@ class GuestCheckoutForm(forms.Form):
     first_name = forms.CharField(label=_("First name"), max_length=150, required=True)
     last_name = forms.CharField(label=_("Last name"), max_length=150, required=True)
     email = forms.EmailField(label=_("Email address"), required=True)
+    order_date = forms.DateField(label=_("Order date"), required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    order_time = forms.TimeField(label=_("Order time"), required=False, widget=forms.TimeInput(attrs={'type': 'time'}))
 
     def is_guest_checkout(self):
         return True
