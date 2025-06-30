@@ -642,3 +642,4 @@ CHANNEL_LAYERS = {
         },
     },
 }
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

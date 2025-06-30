@@ -1,0 +1,77 @@
+server {
+    listen 80;
+    server_name heehaui.uk www.heehaui.uk;
+
+    # Static files - Django Oscar static files
+    location /static/ {
+        alias /opt/fast-delievery-food/public/static/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Media files - User uploaded content
+    location /media/ {
+        alias /opt/fast-delievery-food/public/media/;
+        expires 30d;
+        add_header Cache-Control "public";
+        access_log off;
+    }
+
+    # Main application - Proxy to Daphne Unix socket
+    location / {
+        proxy_pass http://unix:/run/daphne/daphne.sock;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_buffering off;
+        proxy_redirect off;
+    }
+}
+
+# HTTPS redirect (will be added by Certbot automatically)
+# Uncomment after SSL setup:
+# server {
+#     listen 443 ssl http2;
+#     server_name heehaui.uk www.heehaui.uk;
+#
+#     # SSL certificates (managed by Certbot)
+#     ssl_certificate /etc/letsencrypt/live/heehaui.uk/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/heehaui.uk/privkey.pem;
+#     include /etc/letsencrypt/options-ssl-nginx.conf;
+#     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+#
+#     # Static files
+#     location /static/ {
+#         alias /opt/fast-delievery-food/public/static/;
+#         expires 30d;
+#         add_header Cache-Control "public, immutable";
+#         access_log off;
+#     }
+#
+#     # Media files
+#     location /media/ {
+#         alias /opt/fast-delievery-food/public/media/;
+#         expires 30d;
+#         add_header Cache-Control "public";
+#         access_log off;
+#     }
+#
+#     # Main application
+#     location / {
+#         proxy_pass http://unix:/run/daphne/daphne.sock;
+#         proxy_http_version 1.1;
+#         proxy_set_header Host $http_host;
+#         proxy_set_header X-Real-IP $remote_addr;
+#         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#         proxy_set_header X-Forwarded-Proto $scheme;
+#         proxy_set_header Upgrade $http_upgrade;
+#         proxy_set_header Connection "upgrade";
+#         proxy_buffering off;
+#         proxy_redirect off;
+#     }
+# }
